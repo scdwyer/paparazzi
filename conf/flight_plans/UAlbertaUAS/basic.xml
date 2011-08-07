@@ -1,6 +1,7 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="75" ground_alt="0" lat0="53.41766" lon0="-113.55010" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270">
+<flight_plan alt="75" ground_alt="0" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270"> <!-- Bremner -->
+<!-- <flight_plan alt="75" ground_alt="0" lat0="53.41766" lon0="-113.55010" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270"> -->  <!-- Ellerslie -->
   <header>
 #include "subsystems/navigation/nav_line.h"
 #include "datalink.h"
@@ -18,8 +19,12 @@
     <waypoint name="_BASELEG" x="168.8" y="13.8"/>
     <waypoint name="CLIMB" x="-114.5" y="-162.3"/>
   </waypoints>
+  <includes>
+    <include name="SoftKill" procedure="bremner_sectors.xml"/>
+  </includes>
   <exceptions>
     <!--exception cond="datalink_time > 22" deroute="Standby"/-->
+    <exception cond="Or(! InsideSoftKill(estimator_x, estimator_y), estimator_z > ground_alt + 250)" deroute="Standby"/>
   </exceptions>
   <blocks>
     <block name="Wait GPS">

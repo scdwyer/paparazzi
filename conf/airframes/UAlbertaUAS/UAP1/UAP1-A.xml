@@ -9,7 +9,7 @@
      SmartFly optical ignition cutoff module
      PPM Encoder w/ Atmega168
      PPZUAV TWOG V1 board
-     PPZUAV IR Sensors, Aligned IR Sensors
+     Joby Robotics Aspirin IMU
      Digi XTend 900MHz radio modems (transparent serial)
      PPZUAV Ublox LEA 5H GPS
 
@@ -21,13 +21,43 @@
 
 <!-- Firmware Section -->
   <firmware name="fixedwing">
-    <target name="ap" 			board="twog_1.0"/>
     <target name="sim" 			board="pc"/>
     <target name="jsbsim"		board="pc"/>
+    <target name="ap" 			board="twog_1.0">
+      <define name="STRONG_WIND"/> <!-- can these be placed elsewhere, like MISC? -->
+      <define name="WIND_INFO"/>
+      <define name="WIND_INFO_RET"/>
 
+      <configure name="PERIODIC_FREQUENCY" value="120"/>
+      <configure name="AHRS_PROPAGATE_FREQUENCY" value="100"/> <!-- can these AHRS parts go in the AHRS section? -->
+      <configure name="AHRS_CORRECT_FREQUENCY" value="100"/>
+      <define name="AHRS_TRIGGERED_ATTITUDE_LOOP" /> <!-- attittude loop called only when a new ins attitude is available -->
+
+      <configure name="AHRS_ALIGNER_LED" value="3"/> <!-- LED3 is on the USB connector, and the yellow LED NEEDS RESISTOR -->
+      <configure name="CPU_LED" value="3"/> <!-- should this be AHRS_CPU_LED? -->
+    </target>
+
+    <define name="AGR_CLIMB"/>
     <define name="LOITER_TRIM"/>
     <define name="ALT_KALMAN"/>
-    <define name="AGR_CLIMB"/>
+    <!-- <define name="USE_AIRSPEED"/> -->
+    <!-- <define name="USE_I2C0"/> ??????-->
+
+    <!-- Difference between ic and dcm???? AHRS_GRAVITY_UPDATE_NORM_HEURISTIC AHRS_MAG_UPDATE_YAW_ONLY AHRS_PROPAGATE_QUAT AHRS_PROPAGATE_RMAT AHRS_PROPAGATE_LOW_PASS_RATES
+                                           AHRS_UPDATE_FW_ESTIMATOR Couple more as well
+    -->
+    <subsystem name="ahrs" type="ic">
+      <define name="AHRS_GRAVITY_UPDATE_COORDINATED_TURN" />
+    </subsystem>
+    <subsystem name="imu" type="aspirin_i2c"/>
+    <!--
+    <subsystem name="imu" type="ppzuav"/>
+    <subsystem name="ahrs" type="dcm">
+      <define name="USE_MAGNETOMETER" />
+    </subsystem>
+    -->
+
+    <subsystem name="i2c"/>
 
     <subsystem name="radio_control" type="ppm"/>
     <subsystem name="telemetry"     type="transparent"/> <!-- default baud is 57600 -->
@@ -35,6 +65,7 @@
     <subsystem name="attitude"      type="infrared"/>
     <subsystem name="gps"           type="ublox_utm"/>
     <subsystem name="navigation"/>
+
   </firmware>
 
   <firmware name="setup">
@@ -42,6 +73,13 @@
     <target name="setup_actuators" 	board="twog_1.0"/>
   </firmware>
 
+<!-- modules section -->
+<!--
+  <modules main_freq="60">
+    <load name="demo_module.xml"/>
+    <load name="airspeed_ets.xml"/>
+  </modules>
+-->
 <!-- simulation section -->
   <section name="SIMU">
     <!-- for normal SITL sim -->
@@ -128,7 +166,23 @@
     <define name="MAX_PITCH" value="25.0" unit="deg"/>
   </section>
 
+  <section name="INS" prefix="INS_">
+    <define name="ROLL_NEUTRAL_DEFAULT" value="0" unit="deg"/>
+    <define name="PITCH_NEUTRAL_DEFAULT" value="0" unit="deg"/>
+    <!-- Additional, not sure what they do: INS_BARO_SENS_NUM, INS_BARO_SENS_DEN, INS_SONAR_SENS_NUM, INS_SONAR_SENS_DEN -->
+  </section>
+
+  <!-- Local magnetic field -->
+  <section name="AHRS" prefix="AHRS_" >
+    <define name="H_X" value="0.51562740288882" />
+    <define name="H_Y" value="-0.05707735220832" />
+    <define name="H_Z" value="0.85490967783446" />
+  </section>
+
   <section name="IMU" prefix="IMU_">
+    <define name="GYRO_P_SIGN" value="1"/>
+    <define name="GYRO_Q_SIGN" value="1"/>
+    <define name="GYRO_R_SIGN" value="1"/>
     <define name="GYRO_P_NEUTRAL" value="-1"/>
     <define name="GYRO_Q_NEUTRAL" value="12"/>
     <define name="GYRO_R_NEUTRAL" value="-8"/>
@@ -139,6 +193,9 @@
     <define name="GYRO_PR_SENS" value="0.0" integer="16"/>
     <define name="GYRO_QR_SENS" value="0.0" integer="16"/>
     
+    <define name="ACCEL_X_SIGN" value="1"/>
+    <define name="ACCEL_Y_SIGN" value="1"/>
+    <define name="ACCEL_Z_SIGN" value="1"/>
     <define name="ACCEL_X_NEUTRAL" value="10"/>
     <define name="ACCEL_Y_NEUTRAL" value="14"/>
     <define name="ACCEL_Z_NEUTRAL" value="-3"/>
@@ -149,6 +206,9 @@
     <define name="ACCEL_XZ_SENS" value="0.0" integer="16"/>
     <define name="ACCEL_YZ_SENS" value="0.0" integer="16"/>
     
+    <define name="MAG_X_SIGN" value="1"/>
+    <define name="MAG_Y_SIGN" value="1"/>
+    <define name="MAG_Z_SIGN" value="1"/>
     <define name="MAG_X_NEUTRAL" value="-71"/>
     <define name="MAG_Y_NEUTRAL" value="19"/>
     <define name="MAG_Z_NEUTRAL" value="-94"/>
@@ -158,6 +218,11 @@
     <define name="MAG_XY_SENS" value="0.0" integer="16"/>
     <define name="MAG_XZ_SENS" value="0.0" integer="16"/>
     <define name="MAG_YZ_SENS" value="0.0" integer="16"/>
+
+    <define name="BODY_TO_IMU_PHI" value="0"/>
+    <define name="BODY_TO_IMU_THETA" value="0"/>
+    <define name="BODY_TO_IMU_PSI" value="0"/>
+    <!-- can also define channel for each x,y,z for weird orientations etc, should be defaults? -->
   </section>
 
   <section name="BAT">
@@ -185,6 +250,8 @@
     <!-- <define name="GLIDE_AIRSPEED" value="10"/> -->
     <!-- <define name="GLIDE_VSPEED" value="3."/> -->
     <!-- <define name="GLIDE_PITCH" value="45" unit="deg"/> -->
+
+    <!-- Not sure: MIN_AIRSPEED_FOR_TAKEOFF,   -->
   </section>
 
 
@@ -206,15 +273,27 @@
     <define name="AUTO_THROTTLE_PGAIN" value="-0.023"/>
     <define name="AUTO_THROTTLE_IGAIN" value="0.1"/>
     <!-- <define name="AUTO_THROTTLE_DGAIN" value="0.0"/> -->
-    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.05"/>
+    <!-- <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.05"/> -->
+    <!-- <define name="AUTO_THROTTLE_PITCH_OF_VZ_DGAIN" value="0.05"/> -->
 
     <!-- auto pitch inner loop: climb loop: intermediate vert control stage; guidance_v.c -->
     <define name="AUTO_PITCH_PGAIN" value="-0.06"/>
-    <define name="AUTO_PITCH_IGAIN" value="0.0"/>
+    <!-- <define name="AUTO_PITCH_IGAIN" value="0.0"/> -->
+    <!-- <define name="AUTO_PITCH_DGAIN" value="0.0"/> -->
     <define name="AUTO_PITCH_MAX_PITCH" value="20.0" unit="deg"/>
     <define name="AUTO_PITCH_MIN_PITCH" value="-20.0" unit="deg"/>
 
     <define name="THROTTLE_SLEW_LIMITER" value="3" unit="s"/> <!-- min time from 0 to 100% throttle -->
+    <!-- <define name="THROTTLE_SLEW" value="?????" unit="s"/> -->
+<!-- 
+    <define name="AUTO_AIRSPEED_SETPOINT" value="13.0" unit="m/s"/>
+    <define name="AUTO_AIRSPEED_PGAIN" value="0.060"/>
+    <define name="AUTO_AIRSPEED_IGAIN" value="0.050"/> 
+  
+    <define name="AUTO_GROUNDSPEED_SETPOINT" value="7.0" unit="m/s"/>
+    <define name="AUTO_GROUNDSPEED_PGAIN" value="0.75"/>
+    <define name="AUTO_GROUNDSPEED_IGAIN" value="0.25"/>
+-->
   </section>
 
 
@@ -224,20 +303,29 @@
     <!-- <define name="SPEED_DEPEND_NAV" value="??"/> --> <!-- multiplied with COURSE_PGAIN?? -->
     <!-- <define name="COURSE_DGAIN" value="0.0"/> -->
     <!-- <define name="COURSE_PRE_BANK_CORRECTION" value="??"/> -->
+    <!-- <define name="COURSE_SLEW_INCREMENT" value="??"/> -->
     <define name="ROLL_MAX_SETPOINT" value="35.0" unit="deg"/>
     <define name="PITCH_MAX_SETPOINT" value="30.0" unit="deg"/>
     <define name="PITCH_MIN_SETPOINT" value="-30.0" unit="deg"/>
 
     <!-- Roll loop: lower stage of horiz control, used for lateral attitude stabilization -->
     <define name="ROLL_PGAIN" value="6000."/>
+    <!-- <define name="ROLL_IGAIN" value="6000."/> -->
     <!-- <define name="ROLL_ATTITUDE_GAIN" value="??"/> --> <!-- if not defined, falls back to ROLL_PGAIN attitude only loop -->
     <!-- <define name="ROLL_RATE_GAIN" value="??"/> -->
+    <!-- <define name="ROLL_SLEW" value="??"/> ????-->
+    <!-- <define name="ROLL_KFFA" value="??"/> ????-->
+    <!-- <define name="ROLL_KFFD" value="??"/> ????-->
     <define name="AILERON_OF_THROTTLE" value="0.0"/>
 
     <!-- Pitch loop: lower stage of vert control, used for longitudinal attitude stabilization -->
     <define name="PITCH_PGAIN" value="-9000."/>
+    <!-- <define name="PITCH_IGAIN" value="-1700."/> -->
     <define name="PITCH_DGAIN" value="-1700."/>
     <define name="ELEVATOR_OF_ROLL" value="1500"/>
+    <!-- <define name="PITCH_OF_ROLL" value="1500"/> --> <!-- what about above? -->
+    <!-- <define name="PITCH_KFFA" value="??"/> ????-->
+    <!-- <define name="PITCH_KFFD" value="??"/> ????-->
   </section>
 
   <section name="NAV">
@@ -256,9 +344,4 @@
     <define name="DESCENT_NAV_RATIO" value="1.0"/>
   </section>
 
-<!--
-  <modules main_freq="60">
-    <load name="demo_module.xml"/>
-  </modules>
--->
 </airframe>

@@ -78,6 +78,7 @@
 
   <modules main_freq="60">
 <!--    <load name="demo_module.xml"/> -->
+    <load name="sys_mon.xml"/>
     <load name="airspeed_ets.xml">
       <define name="AIRSPEED_ETS_I2C_DEV" value="i2c1"/>
       <define name="SENSOR_SYNC_SEND"/>
@@ -102,8 +103,8 @@
   <servos>
     <servo name="MOTOR"         no="4" min="1198" neutral="1198" max="1887"/> <!-- min and neutral typically the same -->
     <servo name="AILERON_RIGHT"  no="3" min="1115" neutral="1504" max="1903"/>
-    <servo name="ELEVATOR"      no="7" min="1902" neutral="1506" max="1115"/>
-    <servo name="RUDDER"        no="6" min="1115" neutral="1509" max="1902"/>
+    <servo name="ELEVATOR"      no="7" min="1115" neutral="1506" max="1902"/>
+    <servo name="RUDDER"        no="6" min="1902" neutral="1509" max="1115"/>
     <servo name="AILERON_LEFT" no="2" min="1115" neutral="1504" max="1903"/>
     <servo name="IGN_CUT"	       no="0" min="1115" neutral="1508" max="1903"/>
     <!-- <servo name="CAM_PITCH"     no="1" min="1000" neutral="1500" max="2000"/> -->

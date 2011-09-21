@@ -1,15 +1,15 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="660" ground_alt="610" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Basic" security_height="35" qfu="270"> <!-- Bremner -->
+<flight_plan alt="640" ground_alt="601" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270"> <!-- Bremner -->
   <header>
 #include "subsystems/navigation/nav_line.h"
 #include "datalink.h"
   </header>
   <waypoints>
     <waypoint name="HOME" x="0" y="0"/>
-    <waypoint name="STDBY" x="0" y="-100.1"/>
-    <waypoint name="1" x="10.1" y="-189.9"/>
-    <waypoint name="2" x="132.3" y="-139.1"/>
+    <waypoint name="STDBY" x="0" y="50.1"/>
+    <waypoint name="1" x="100.1" y="50.9"/>
+    <waypoint name="2" x="-150.3" y="50.1"/>
     <waypoint name="MOB" x="137.0" y="-11.6"/>
     <waypoint name="S1" x="-119.2" y="-69.6"/>
     <waypoint name="S2" x="274.4" y="-209.5"/>

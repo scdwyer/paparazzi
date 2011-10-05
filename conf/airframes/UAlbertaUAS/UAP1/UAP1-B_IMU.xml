@@ -89,8 +89,8 @@
 <!-- simulation section -->
   <section name="SIMU">
     <!-- for normal SITL sim -->
-    <define name="WEIGHT" value ="1."/>
-    <define name="YAW_RESPONSE_FACTOR" value ="2."/> <!-- adapts the aircraft's turn rate corresponding to a bank angle; a larger value increases the turn radius -->
+    <define name="WEIGHT" value ="1.5"/>
+    <define name="YAW_RESPONSE_FACTOR" value ="1.5"/> <!-- adapts the aircraft's turn rate corresponding to a bank angle; a larger value increases the turn radius -->
     <define name="ROLL_RESPONSE_FACTOR" value ="20."/> <!-- aileron efficiency; a higher value increases roll agility -->
     <!-- for jsbsim -->
     <define name="JSBSIM_MODEL" value="&quot;Malolo1&quot;"/>

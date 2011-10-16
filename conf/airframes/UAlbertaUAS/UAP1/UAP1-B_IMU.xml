@@ -310,13 +310,13 @@
 
   <section name="HORIZONTAL CONTROL" prefix="H_CTL_"> <!-- found in stabilization_attitude.c -->
     <!-- Course loop: upper stage of horiz control -->
-    <define name="COURSE_PGAIN" value="-1.0"/>
+    <define name="COURSE_PGAIN" value="-1.0"/> <!-- multiplied by error in heading for part of roll_setpoint -->
     <!-- <define name="SPEED_DEPEND_NAV" value="??"/> --> <!-- multiplied with COURSE_PGAIN?? -->
-    <!-- <define name="COURSE_DGAIN" value="0.0"/> -->
-    <!-- <define name="COURSE_PRE_BANK_CORRECTION" value="??"/> -->
+    <!-- <define name="COURSE_DGAIN" value="0.0"/> --> <!-- d gain for course, comes after pgain, then added back for roll_setpoint -->
+    <!-- <define name="COURSE_PRE_BANK_CORRECTION" value="??"/> --> <!-- multiplied by course_pre_bank?? and added to roll_setpoint -->
     <!-- <define name="COURSE_SLEW_INCREMENT" value="??"/> -->
-    <define name="ROLL_MAX_SETPOINT" value="0.6"/>
-    <define name="PITCH_MAX_SETPOINT" value="0.4"/>
+    <define name="ROLL_MAX_SETPOINT" value="0.6"/> <!-- bounds the roll_setpoint -->
+    <define name="PITCH_MAX_SETPOINT" value="0.4"/> <!-- bounds the pitch_setpoint -->
     <define name="PITCH_MIN_SETPOINT" value="-0.4"/>
 
     <!-- Roll loop: lower stage of horiz control, used for lateral attitude stabilization -->

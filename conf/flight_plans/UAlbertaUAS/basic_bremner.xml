@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="660" ground_alt="601" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270"> <!-- Bremner -->
+<flight_plan alt="660" ground_alt="605" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Basic" security_height="25" qfu="270"> <!-- Bremner -->
   <header>
 #include "subsystems/navigation/nav_line.h"
 #include "datalink.h"
@@ -28,7 +28,7 @@
     -->
   </includes>
   <exceptions>
-    <exception cond="datalink_time > 10" deroute="Standby"/>
+    <exception cond="datalink_time > 15" deroute="Standby"/>
     <exception cond="(estimator_z > ground_alt + 240)" deroute="Standby"/>
     <exception cond="(! InsideSoftKillOut(estimator_x, estimator_y))" deroute="Standby"/>
     <!--<exception cond="! Or( Or(InsideSoftKillNor(estimator_x, estimator_y), InsideSoftKillSou(estimator_x, estimator_y)), InsideSoftKillMid(estimator_x, estimator_y))" deroute="Standby"/> -->

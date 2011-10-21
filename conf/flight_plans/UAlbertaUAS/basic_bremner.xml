@@ -29,8 +29,8 @@
   </includes>
   <exceptions>
     <exception cond="datalink_time > 15" deroute="Standby"/>
-    <exception cond="(estimator_z > ground_alt + 240)" deroute="Standby"/>
-    <exception cond="(! InsideSoftKillOut(estimator_x, estimator_y))" deroute="Standby"/>
+    <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/>
+    <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby"/>
     <!--<exception cond="! Or( Or(InsideSoftKillNor(estimator_x, estimator_y), InsideSoftKillSou(estimator_x, estimator_y)), InsideSoftKillMid(estimator_x, estimator_y))" deroute="Standby"/> -->
   </exceptions>
   <blocks>

@@ -24,23 +24,23 @@
     <target name="sim" 			board="pc"/>
     <target name="jsbsim"		board="pc"/>
     <target name="ap" 			board="twog_1.0">
-      <define name="STRONG_WIND"/> <!-- can these be placed elsewhere, like MISC? -->
+      <!-- <define name="STRONG_WIND"/> --> <!-- can these be placed elsewhere, like MISC? -->
       <define name="WIND_INFO"/>
       <define name="WIND_INFO_RET"/>
 
       <configure name="PERIODIC_FREQUENCY" value="120"/>
       <configure name="AHRS_PROPAGATE_FREQUENCY" value="100"/> <!-- can these AHRS parts go in the AHRS section? -->
       <configure name="AHRS_CORRECT_FREQUENCY" value="100"/>
-      <define name="AHRS_TRIGGERED_ATTITUDE_LOOP" /> <!-- attittude loop called only when a new ins attitude is available -->
+      <define name="AHRS_TRIGGERED_ATTITUDE_LOOP" /> <!-- attitude loop called only when a new ins attitude is available -->
 
       <configure name="AHRS_ALIGNER_LED" value="3"/> <!-- LED3 is on the USB connector, and the yellow LED NEEDS RESISTOR -->
       <configure name="CPU_LED" value="5"/> <!-- should this be AHRS_CPU_LED? -->
     </target>
 
-    <define name="AGR_CLIMB"/>
+    <!-- <define name="AGR_CLIMB"/> -->
     <define name="LOITER_TRIM"/>
     <define name="ALT_KALMAN"/>
-    <!--<define name="USE_AIRSPEED"/> or -->
+    <!-- <define name="USE_AIRSPEED"/> -->
     <define name="MEASURE_AIRSPEED"/>
     <define name="USE_I2C1"/>
 
@@ -68,7 +68,7 @@
 <!-- modules section -->
 
   <modules main_freq="60">
-<!--    <load name="demo_module.xml"/> -->
+    <!-- <load name="demo_module.xml"/> -->
     <!-- <load name="sys_mon.xml"/> -->
     <load name="airspeed_ets.xml">
       <define name="AIRSPEED_ETS_I2C_DEV" value="i2c1"/>
@@ -89,9 +89,9 @@
 <!-- simulation section -->
   <section name="SIMU">
     <!-- for normal SITL sim -->
-    <define name="WEIGHT" value ="1.5"/>
-    <define name="YAW_RESPONSE_FACTOR" value ="1.5"/> <!-- adapts the aircraft's turn rate corresponding to a bank angle; a larger value increases the turn radius -->
-    <define name="ROLL_RESPONSE_FACTOR" value ="20."/> <!-- aileron efficiency; a higher value increases roll agility -->
+    <!-- <define name="WEIGHT" value ="1.5"/> -->
+    <!-- <define name="YAW_RESPONSE_FACTOR" value ="1.5"/> --> <!-- adapts the aircraft's turn rate corresponding to a bank angle; a larger value increases the turn radius -->
+    <!-- <define name="ROLL_RESPONSE_FACTOR" value ="20."/> --> <!-- aileron efficiency; a higher value increases roll agility -->
     <!-- for jsbsim -->
     <define name="JSBSIM_MODEL" value="&quot;Malolo1&quot;"/>
     <define name="JSBSIM_IR_ROLL_NEUTRAL" value="0." unit="deg"/>
@@ -296,12 +296,12 @@
 
     <define name="THROTTLE_SLEW_LIMITER" value="3" unit="s"/> <!-- min time from 0 to 100% throttle -->
     <!-- <define name="THROTTLE_SLEW" value="?????" unit="s"/> -->
-<!-- 
+<!--
     <define name="AUTO_AIRSPEED_SETPOINT" value="21.0" unit="m/s"/>
     <define name="AUTO_AIRSPEED_PGAIN" value="0.060"/>
     <define name="AUTO_AIRSPEED_IGAIN" value="0.050"/> 
   
-    <define name="AUTO_GROUNDSPEED_SETPOINT" value="10.0" unit="m/s"/>
+    <define name="AUTO_GROUNDSPEED_SETPOINT" value="20.0" unit="m/s"/>
     <define name="AUTO_GROUNDSPEED_PGAIN" value="0.75"/>
     <define name="AUTO_GROUNDSPEED_IGAIN" value="0.25"/>
 -->
@@ -325,23 +325,20 @@
     <define name="ROLL_ATTITUDE_GAIN" value="-15000."/> <!-- if not defined, falls back to ROLL_PGAIN attitude only loop -->
     <define name="ROLL_RATE_GAIN" value="-1500."/>
     <!-- <define name="ROLL_SLEW" value="0.1"/> ???? 0.1 to 1.0???-->
-    <!-- <define name="ROLL_KFFA" value="??"/> ????-->
-    <!-- <define name="ROLL_KFFD" value="??"/> ????-->
     <define name="AILERON_OF_THROTTLE" value="0.0"/> <!-- used to correct throttle-dependent roll, best fixed mechanically -->
 
     <!-- Pitch loop: lower stage of vert control, used for longitudinal attitude stabilization -->
     <define name="PITCH_PGAIN" value="-12000."/>
     <!-- <define name="PITCH_IGAIN" value="-1700."/> -->
     <define name="PITCH_DGAIN" value="1.5"/>
-    <define name="ELEVATOR_OF_ROLL" value="1000"/>
+    <define name="ELEVATOR_OF_ROLL" value="1000"/> <!-- must be greater than 0 -->
     <!-- <define name="PITCH_OF_ROLL" value="1500"/> --> <!-- what about above? -->
-    <!-- <define name="PITCH_KFFA" value="??"/> ????-->
-    <!-- <define name="PITCH_KFFD" value="??"/> ????-->
   </section>
 
   <section name="NAV">
     <define name="NAV_PITCH" value="0." unit="deg"/>
     <define name="NAV_GLIDE_PITCH_TRIM" value="0"/>
+    <!-- <define name="NAV_GROUND_SPEED_PGAIN" value="0"/> -->
   </section>
 
   <section name="AGGRESSIVE" prefix="AGR_">

@@ -1,0 +1,12 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="send_datalink_time" dir="datalink">
+  <header>
+    <file name="send_datalink_time.h"/>
+  </header>
+  <periodic fun="send_datalink_time_periodic()" freq="1"/>
+  <makefile>
+    <file name="send_datalink_time.c"/>
+  </makefile>
+</module>
+

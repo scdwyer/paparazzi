@@ -547,6 +547,9 @@
 	</message>
 
  <!-- 70 is free -->
+  <message name="AC_DATALINK_TIME" id="70">
+    <field name="datalink_time" type="uint16" unit="s"/>
+  </message>
  <!-- 71 is free -->
  <!-- 72 is free -->
  <!-- 73 is free -->

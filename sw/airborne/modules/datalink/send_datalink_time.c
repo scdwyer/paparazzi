@@ -39,12 +39,10 @@
 #include "downlink.h"
 
 
-void send_downlink_time_periodic( void ) {
-    uint8_t ac_id = AC_ID;
+void send_datalink_time_periodic( void ) {
     extern uint16_t datalink_time;
 
-    DOWNLINK_SEND_AC_DATALINK_TIME_(DefaultChannel,
-                &ac_id,
+    DOWNLINK_SEND_AC_DATALINK_TIME(DefaultChannel,
                 &datalink_time );
 }
 

@@ -94,11 +94,11 @@
     <define name="YAW_RESPONSE_FACTOR" value ="1."/> <!-- adapts the aircraft's turn rate corresponding to a bank angle; a larger value increases the turn radius -->
     <define name="ROLL_RESPONSE_FACTOR" value ="15."/> <!-- aileron efficiency; a higher value increases roll agility -->
     <!-- for jsbsim -->
-    <define name="JSBSIM_MODEL" value="&quot;Malolo1&quot;"/>
+    <define name="JSBSIM_MODEL" value="&quot;Rascal110&quot;"/>
     <define name="JSBSIM_IR_ROLL_NEUTRAL" value="0." unit="deg"/>
     <define name="JSBSIM_IR_PITCH_NEUTRAL" value="0." unit="deg"/>
-    <define name="JSBSIM_LAUNCHSPEED" value="15.0"/>
-    <define name="JSBSIM_INIT" value="&quot;Malolo1-IC&quot;"/>
+    <define name="JSBSIM_LAUNCHSPEED" value="15.0"/> <!-- m/s -->
+    <define name="JSBSIM_INIT" value="&quot;Rascal110-IC&quot;"/>
   </section>
 
 <!-- commands section -->

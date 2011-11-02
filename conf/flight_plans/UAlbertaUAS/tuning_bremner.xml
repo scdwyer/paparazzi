@@ -51,7 +51,8 @@ a. Fly to a safe altitude and start a pass at cruise throttle in front of the pi
 b. Switch to auto1 and immediately check if you can turn (roll) left AND right, and if you can pitch up and down. Be prepared to immediately take back manual control if something goes wrong (i.e. sudden dive or roll). If the response is extremely sluggish, you may need to increase gains (try double) or the max pitch/roll in auto1 may need to be increased.
 c. Fly at cruise and adjust ROLL_ATTITUDE_GAIN (or ROLL_PGAIN). Increase the gain (more negative) if the response is sluggish, and decrease the gain if the aircraft oscillates in roll. The goal is to get the aircraft to have fast response without oscillating. It may help to use the realtime plotter and adjust ATTITUDE:phi and DESIRED:roll together. If the aircraft is behaving, attempt some aggressive (i.e. step) setpoint changes and watch the response on the realtime plot. Also, you may try adjusting the ROLL_RATE_GAIN. Try varying the speed to ensure the control is reasonable over the aircrafts speed range.
 d. Do the same as above for the pitch (PITCH_PGAIN, ATTITUDE:theta, DESIRED:pitch, PITCH_IGAIN, PITCH_DGAIN).
-e. If the aircraft seems to drift a bit in roll or pitch, you may need to adjust the *_(ROLL|PITCH)_NEUTRAL_DEFAULT; check the attitude readout when the elevator and aileron are neutral. If changing the throttle seems to induce a bit of roll, you can try adjusting AILERON_OF_THROTTLE, but this is best fixed mechanically with engine mounting. If the elevator seems to fall off or climb in pitch when the aircraft is banked, you can adjust the ELEVATOR_OF_ROLL gain.
+e. If the aircraft seems to drift a bit in roll or pitch, you may need to adjust the *_(ROLL|PITCH)_NEUTRAL_DEFAULT; check the attitude readout when the elevator and aileron are neutral. If changing the throttle seems to induce a bit of roll, you can try adjusting AILERON_OF_THROTTLE, but this is best fixed mechanically with engine mounting.
+f. It is ideal if the aircraft does not climb or descend as a result of rolling the aircraft. In addition, the "bank and yank" method of heading control in Paparazzi requires up elevator in addition to roll to properly turn. Normally in flight, when an aircraft banks the nose will fall off (sink) without any additional pitch input. Even when maintaining level flight in pitch (i.e. pitch setpoint of 0), under the same velocity, the effective lifting area/vector of the aircraft is reduced, likely resulting in a descent. To counter this, the pitch control loop uses the ELEVATOR_OF_ROLL gain to increase the pitch setpoint (thereby increasing angle of attack and thus lift). In auto1, hold a constant bank (experiment with different magnitudes) and bbserve the aircraft and data from ESTIMATOR:z_dot and DESIRED:climb. Adjust the ELEVATOR_OF_ROLL until climb is zero in banked turns.
 
 After completing this, your aircraft should be able to stabilize itself. However, higher level control loops may still be unstable, so don't count on the autopilot bringing your plane back yet.
 
@@ -98,7 +99,7 @@ f. Experiment with Loiter and Dash throttle settings.
 The primary control loops should now be decently tuned!
 
 7. Try activating STANDBY
-a. Now that the control loops have been tuned, activate the Standby block. The aircraft should have no trouble joining and maintaining orbit around the waypoint.
+a. Now that the control loops have been tuned, activate the Standby block. The aircraft should have no trouble joining and maintaining orbit around the waypoint. If there are oscillations across many parameters, you may need to tune (or detune) some loops more closely. This will undoubtedly take some practice and time. One gain to look at ELEVATOR_OF_ROLL. Experience has shown trying to maintain a circular loiter can be helped by adjusting this gain. In addition, increasing the radius of the circle may help as well.
 
 Other things to consider:
 This tuning only considers the base number of parameters. For many loops, PI, PD or full PID controllers (sometimes with feedforward and biases) are available. In addition, various flags and extra features introduce further parameters to adjust. For example, AGR_CLIMB modifies the altitude loop, the auto throttle loop and the course loop. The COURSE_SLEW_INCREMENT flag and value limits the change rate of the course setpoint, which may help with the course loop tuning or under extreme course setpoint changes. The COURSE_PRE_BANK_CORRECTION value adjusts a bias used if the aircraft is navigating a circle to tune the best bank angle when circling. The Flight Benchmark module may help in fine-tuning.
@@ -154,10 +155,10 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
   </includes>
   <!-- The exceptions section allows for global error and failsafe handling -->
   <exceptions>
-    <exception cond="datalink_time > 15" deroute="Standby"/>
-    <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/>
-    <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby"/>
-  </exceptions>
+    <!-- <exception cond="datalink_time > 15" deroute="Standby1"/> -->
+    <!-- <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby2"/> -->
+    <!-- <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby3"/> -->
+  </exceptions
   <!-- The blocks section contains each block of the flightplan, which actually make the aircraft do something -->
   <blocks>
     <block name="Wait GPS">
@@ -181,6 +182,15 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <go from="HOME" throttle="1.0" vmode="throttle" wp="CLIMB" pitch="15"/>
     </block>
     <block key="<Control>a" name="Standby" strip_button="Standby" strip_icon="home.png" group="home">
+      <circle radius="nav_radius" wp="STDBY"/>
+    </block>
+    <block key="<Control>a" name="Standby1" strip_button="Standby" strip_icon="home.png" group="home">
+      <circle radius="nav_radius" wp="STDBY"/>
+    </block>
+    <block key="<Control>a" name="Standby2" strip_button="Standby" strip_icon="home.png" group="home">
+      <circle radius="nav_radius" wp="STDBY"/>
+    </block>
+    <block key="<Control>a" name="Standby3" strip_button="Standby" strip_icon="home.png" group="home">
       <circle radius="nav_radius" wp="STDBY"/>
     </block>
     <!-- first, tune the pitch and roll loops. This can be done using auto1. Here for sim demos. This block may cause a fly-away -->

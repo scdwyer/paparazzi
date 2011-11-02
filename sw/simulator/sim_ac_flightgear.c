@@ -84,7 +84,7 @@ void sim_ac_flightgear_send(JSBSim::FGFDMExec* FDMExec)
 
     //gui.cur_time = 3198060679ul;
     //gui.cur_time = 3198060679ul + rint(fdm.time);
-    gui.cur_time = 3198101679ul;
+    gui.cur_time = 1320071000ul;
     gui.warp = 1122474394ul;
 
     gui.ground_elev = 0.;

@@ -74,6 +74,9 @@
       <define name="AIRSPEED_ETS_I2C_DEV" value="i2c1"/>
       <define name="SENSOR_SYNC_SEND"/>
     </load>
+    <load name="xtend_rssi.xml">
+      <configure name="XTEND_RSSI_PWM_INPUT_CHANNEL" value="1"/>
+    </load>
     <!-- <load name="send_datalink_time.xml"/> -->
     <!--
     <load name="flight_benchmark.xml">

@@ -158,7 +158,7 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
     <!-- <exception cond="datalink_time > 15" deroute="Standby1"/> -->
     <!-- <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby2"/> -->
     <!-- <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby3"/> -->
-  </exceptions
+  </exceptions>
   <!-- The blocks section contains each block of the flightplan, which actually make the aircraft do something -->
   <blocks>
     <block name="Wait GPS">

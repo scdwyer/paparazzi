@@ -74,13 +74,16 @@ void imu_impl_init(void)
 void imu_periodic( void )
 {
   // Start reading the latest gyroscope data
-  itg3200_periodic();
+  Itg3200Periodic();
 
   // Start reading the latest accelerometer data
-  adxl345_periodic();
+  // Periodicity is automatically adapted
+  // 3200 is the maximum output freq corresponding to the parameter 0xF
+  // A factor 2 is applied to reduice the delay without overloading the i2c
+  RunOnceEvery((PERIODIC_FREQUENCY/(2*3200>>(0xf-ADXL345_BW_RATE))),Adxl345Periodic());
 
-  // Read HMC58XX at 50Hz (main loop for rotorcraft: 512Hz)
-  RunOnceEvery(10,hmc58xx_periodic());
+  // Read HMC58XX at 100Hz (main loop for rotorcraft: 512Hz)
+  RunOnceEvery(5,Hmc58xxPeriodic());
 
   //RunOnceEvery(20,imu_navgo_downlink_raw());
 }
@@ -100,7 +103,7 @@ void imu_navgo_event( void )
   // If the itg3200 I2C transaction has succeeded: convert the data
   itg3200_event();
   if (itg3200_data_available) {
-    RATES_COPY(imu.gyro_unscaled, itg3200_data);
+    RATES_ASSIGN(imu.gyro_unscaled, -itg3200_data.q, itg3200_data.p, itg3200_data.r);
     itg3200_data_available = FALSE;
     gyr_valid = TRUE;
   }
@@ -116,7 +119,7 @@ void imu_navgo_event( void )
   // HMC58XX event task
   hmc58xx_event();
   if (hmc58xx_data_available) {
-    VECT3_ASSIGN(imu.mag_unscaled, -hmc58xx_data.x, -hmc58xx_data.y, hmc58xx_data.z);
+    VECT3_ASSIGN(imu.mag_unscaled, hmc58xx_data.x, hmc58xx_data.y, hmc58xx_data.z);
     hmc58xx_data_available = FALSE;
     mag_valid = TRUE;
   }

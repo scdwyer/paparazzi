@@ -36,7 +36,7 @@ float dc_circle_start_angle = 0;
 float dc_circle_last_block = 0;
 float dc_circle_max_blocks = 0;
 
-float dc_gps_dist = 0;
+float dc_gps_dist = 50;
 float dc_gps_next_dist = 0;
 float dc_gps_x = 0;
 float dc_gps_y = 0;
@@ -145,7 +145,7 @@ uint8_t dc_survey(float interval, float x, float y) {
     dc_gps_x = x;
     dc_gps_y = y;
   }
-  dc_gps_next_dist = interval;
+  dc_gps_next_dist = 0;
   dc_info();
   return 0;
 }

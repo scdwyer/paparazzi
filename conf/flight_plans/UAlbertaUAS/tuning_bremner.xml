@@ -95,6 +95,7 @@ c. When the aircraft starts getting far away (but before it leaves piloting rang
 d. When switching to auto2, observe the behaviour of the aircraft and ATTITUDE:psi and DESIRED:course. It should maintain the setpoint altitude and turn to the desired course. If the aircraft overshoots the course and oscillates back and forth, reduce the course_pgain in settings and/or adjust the course_dgain. If the aircraft is sluggish in meeting the desired course or doesn't quite reach the proper course, increase the gain.  If the aircraft tends to lose altitude during the course correction, try increasing elevator_of_roll (for climbs, reduce the gain).
 e. Repeat C as necessary to tune the loop for crisp response without oscillations. Preferably, begin the course changes from both directions. Also, one can induce setpoint changes under auto2 continuously by adjusting nav_course in the settings.
 f. Experiment with Loiter and Dash throttle settings.
+g. Try out the advance course tuning loops: these will fly the aircraft around a rectangle, either clockwise or counter-clockwise. The CCW loop should be engaged while the aircraft is flying approximately along the vector between waypoint 2 and waypoint 1, towards waypoint 1. The CW loop should be engaged while the aircraft is flying the opposite direction to this. Note that this mode uses an hmode of "route" between waypoints, meaning the aircraft will attempt to track a line between the waypoints, not just go directly towards the next waypoint.
 
 The primary control loops should now be decently tuned!
 
@@ -139,12 +140,14 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
 #include "subsystems/navigation/nav_line.h"
 #include "datalink.h"
   </header>
-  <!-- The waypoints section must contain 1 or more waypoints. For tuning, setup STDBY in a location in front of the pilot at least DEFAULT_CIRCLE_RADIUS metres away from the flight line if restricted to no overflights. Setup 1 and 2 in front of and to the left and right of the pilot, respectively. These are only used for testing ovals and eights after tuning. Again, waypoints should be at least a radius away from the flight line (probably 1.5xRadius) to prevent overflights. HOME can be set somewhere in the vicinity of STDBY or the pilot. CLIMB is for takeoff (mostly for sim, should manually takeoff for tuning)-->
+  <!-- The waypoints section must contain 1 or more waypoints. For tuning, setup STDBY in a location in front of the pilot at least DEFAULT_CIRCLE_RADIUS metres away from the flight line if restricted to no overflights. Setup 1 and 2 in front of and to the right and left of the pilot, respectively, with waypoints 4 and 3 offset back away from the pilot further, so as to make a clockwise rectangle from waypoints 1-2-3-4. These are used for advanced course tuning and testing ovals and eights after tuning. Again, waypoints should be at least a radius away from the flight line (probably 1.5xRadius) to prevent overflights. HOME can be set somewhere in the vicinity of STDBY or the pilot. CLIMB is for takeoff (mostly for sim, should manually takeoff for tuning)-->
   <waypoints>
     <waypoint name="HOME" x="0" y="0"/>
     <waypoint name="STDBY" x="30." y="100."/>
     <waypoint name="1" x="100.1" y="70.9"/>
     <waypoint name="2" x="-100.3" y="80.1"/>
+    <waypoint name="3" x="-100.3" y="195.1"/>
+    <waypoint name="4" x="100.1" y="185.1"/>
     <waypoint name="CLIMB" x="-125.0" y="45.0"/>
   </waypoints>
   <!-- The sectors section allows the definiton of regions of space from waypoints, useful for restricting flight area with exceptions -->
@@ -155,9 +158,9 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
   </includes>
   <!-- The exceptions section allows for global error and failsafe handling -->
   <exceptions>
-    <!-- <exception cond="datalink_time > 15" deroute="Standby1"/> -->
-    <!-- <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby2"/> -->
-    <!-- <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby3"/> -->
+    <!-- <exception cond="datalink_time > 15" deroute="Standby"/> -->
+    <!-- <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/> -->
+    <!-- <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby"/> -->
   </exceptions>
   <!-- The blocks section contains each block of the flightplan, which actually make the aircraft do something -->
   <blocks>
@@ -182,15 +185,6 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <go from="HOME" throttle="1.0" vmode="throttle" wp="CLIMB" pitch="15"/>
     </block>
     <block key="<Control>a" name="Standby" strip_button="Standby" strip_icon="home.png" group="home">
-      <circle radius="nav_radius" wp="STDBY"/>
-    </block>
-    <block key="<Control>a" name="Standby1" strip_button="Standby" strip_icon="home.png" group="home">
-      <circle radius="nav_radius" wp="STDBY"/>
-    </block>
-    <block key="<Control>a" name="Standby2" strip_button="Standby" strip_icon="home.png" group="home">
-      <circle radius="nav_radius" wp="STDBY"/>
-    </block>
-    <block key="<Control>a" name="Standby3" strip_button="Standby" strip_icon="home.png" group="home">
       <circle radius="nav_radius" wp="STDBY"/>
     </block>
     <!-- first, tune the pitch and roll loops. This can be done using auto1. Here for sim demos. This block may cause a fly-away -->
@@ -273,7 +267,7 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
     		v_ctl_mode = V_CTL_MODE_AUTO_ALT
     		nav_altitude = flight_altitude
     --> 
-	<block name="Altitude Tuning">
+    <block name="Altitude Tuning">
       <set var="flight_altitude" value="estimator_z"/>
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="alt" alt="flight_altitude"/>
@@ -291,6 +285,30 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <set var="nav_course" value="estimator_hspeed_dir"/>
       <while cond="TRUE">
       	<heading course="nav_course" vmode="throttle" throttle="V_CTL_AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" until="FALSE"/> <!--continues forever-->
+      </while>
+    </block>
+    <!-- advanced course loop tuning CCW -->
+    <!-- 	NEED TO FIND OUT PARAMETERS FOR THIS
+                Flys in a CCW square, starting the run on the line between waypoints 2 and 1 (engage here)
+    -->
+    <block name="Course Tuning Adv CCW">
+      <while cond="TRUE">
+        <go from="2" wp="1" hmode="route" approaching_time="3"/>
+        <go from="1" wp="4" hmode="route" approaching_time="3"/>
+        <go from="4" wp="3" hmode="route" approaching_time="3"/>
+        <go from="3" wp="2" hmode="route" approaching_time="3"/>
+      </while>
+    </block>
+    <!-- advanced course loop tuning CW-->
+    <!-- 	NEED TO FIND OUT PARAMETERS FOR THIS
+                Flys in a CW square, starting the run on the line between waypoints 1 and 2 (engage here)
+    -->
+    <block name="Course Tuning Adv CW">
+      <while cond="TRUE">
+        <go from="1" wp="2" hmode="route" approaching_time="3"/>
+        <go from="2" wp="3" hmode="route" approaching_time="3"/>
+        <go from="3" wp="4" hmode="route" approaching_time="3"/>
+        <go from="4" wp="1" hmode="route" approaching_time="3"/>
       </while>
     </block>
     <!-- everything should be good, try some stuff -->

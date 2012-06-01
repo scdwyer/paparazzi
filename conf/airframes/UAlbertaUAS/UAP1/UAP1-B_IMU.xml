@@ -178,7 +178,7 @@
   </section>
 
   <section name="INS" prefix="INS_">
-    <define name="ROLL_NEUTRAL_DEFAULT" value="0.04"/>
+    <define name="ROLL_NEUTRAL_DEFAULT" value="0.0"/>
     <define name="PITCH_NEUTRAL_DEFAULT" value="0.025"/>
   </section>
 
@@ -270,7 +270,7 @@
     <define name="THROTTLE_IDLE" value="0.01"/> <!-- bounds the throttle setpoint between idle*max_pprz and max_pprz -->
     <!-- Altitude loop: outer stage of vert control -->
     <!-- outer loop proportional gain -->
-    <define name="ALTITUDE_PGAIN" value="-0.06"/>
+    <define name="ALTITUDE_PGAIN" value="-0.085"/>
     <!-- outer loop saturation -->
     <define name="ALTITUDE_MAX_CLIMB" value="3.5"/> <!-- in one log file, saw a max around 5m/s -->
 
@@ -288,7 +288,7 @@
     <define name="AUTO_THROTTLE_PITCH_OF_VZ_DGAIN" value="0.0"/>
 
     <!-- auto pitch inner loop: climb loop: intermediate vert control stage; guidance_v.c -->
-    <define name="AUTO_PITCH_PGAIN" value="-0.06"/>
+    <define name="AUTO_PITCH_PGAIN" value="-0.04"/>
     <define name="AUTO_PITCH_IGAIN" value="0.0"/>
     <!-- <define name="AUTO_PITCH_DGAIN" value="0.0"/> -->
     <define name="AUTO_PITCH_MAX_PITCH" value="0.35"/>

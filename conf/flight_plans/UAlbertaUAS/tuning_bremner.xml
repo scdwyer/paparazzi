@@ -328,7 +328,6 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
     <!--	airspeed will take precedence as groundspeed set lower
     		setting pitch pgain to zero disables the auto pitch part of the airspeed loop, no climb control
     -->
-    <!--
     <block name="Airspeed (Airspeed) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="0.5*V_CTL_AUTO_AIRSPEED_SETPOINT"/> 
       <set var="v_ctl_auto_airspeed_setpoint" value="V_CTL_AUTO_AIRSPEED_SETPOINT"/>
@@ -336,25 +335,21 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="0.0"/>
       </while>
-  	</block>
-  	-->
+    </block>
 
-  	<!--	groundspeed will take precedence as airspeed set lower
-    		setting pitch pgain to zero disables the auto pitch part of the airspeed loop, no climb control
+    <!-- groundspeed will take precedence as airspeed set lower
+    	 setting pitch pgain to zero disables the auto pitch part of the airspeed loop, no climb control
     -->
-    <!--
-  	<block name="Airspeed (Groundspeed) Tuning">
+    <block name="Airspeed (Groundspeed) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="V_CTL_AUTO_GROUNDSPEED_SETPOINT"/>
       <set var="v_ctl_auto_airspeed_setpoint" value="0.5*V_CTL_AUTO_GROUNDSPEED_SETPOINT"/>
       <set var="v_ctl_auto_pitch_pgain" value="0.0"/>
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="0.0"/>
       </while>
-  	</block>
- 	-->
-  	<!-- airspeed should be tuned now, use in addition to pitch, airspeed will take precedence (coupled with climb more than groundspeed) -->
-  	<!--
-  	<block name="Airspeed (Auto Pitch) Tuning">
+    </block>
+    <!-- airspeed should be tuned now, use in addition to pitch, airspeed will take precedence (coupled with climb more than groundspeed) -->
+    <block name="Airspeed (Auto Pitch) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="0.5*V_CTL_AUTO_AIRSPEED_SETPOINT"/>
       <set var="v_ctl_auto_airspeed_setpoint" value="V_CTL_AUTO_AIRSPEED_SETPOINT"/>
       <set var="v_ctl_auto_pitch_pgain" value="V_CTL_AUTO_PITCH_PGAIN"/>
@@ -362,10 +357,9 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="nav_climb"/>
       </while>
-  	</block>
-  -->
+    </block>
 
-  	<!-- extra typical blocks for testing after tuning -->
+    <!-- extra typical blocks for testing after tuning -->
     <block key="F8" name="Figure 8 around wp 1" strip_button="Figure 8 (wp 1-2)" strip_icon="eight.png" group="base_pattern">
       <eight center="1" radius="nav_radius" turn_around="2"/>
     </block>

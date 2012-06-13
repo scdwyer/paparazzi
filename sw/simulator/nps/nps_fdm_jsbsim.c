@@ -19,10 +19,11 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/** @file nps_fdm_jsbsim.c
- *  Flight Dynamics Model (FDM) for NPS using JSBSim.
+/**
+ * @file nps_fdm_jsbsim.c
+ * Flight Dynamics Model (FDM) for NPS using JSBSim.
  *
- *  This is an FDM for NPS that uses JSBSim as the simulation engine.
+ * This is an FDM for NPS that uses JSBSim as the simulation engine.
  */
 
 #include <FGFDMExec.h>
@@ -89,8 +90,10 @@ void nps_fdm_run_step(double* commands) {
 
 }
 
-/** Feed JSBSim with the latest actuator commands.
- *  @param commands
+/**
+ * Feed JSBSim with the latest actuator commands.
+ * 
+ * @param commands   Pointer to array of doubles holding actuator commands
  */
 static void feed_jsbsim(double* commands) {
 
@@ -107,7 +110,8 @@ static void feed_jsbsim(double* commands) {
 
 }
 
-/** Populates the NPS fdm struct after a simulation step.
+/**
+ * Populates the NPS fdm struct after a simulation step.
  */
 static void fetch_state(void) {
 
@@ -185,14 +189,15 @@ static void fetch_state(void) {
 
 }
 
-/** Initializes JSBSim.
+/**
+ * Initializes JSBSim.
  *
- *  Sets up the JSBSim executive and loads initial conditions
- *  Exits NPS with -1 if models or ICs fail to load
+ * Sets up the JSBSim executive and loads initial conditions
+ * Exits NPS with -1 if models or ICs fail to load
  *
- *  @param dt   The desired simulation timestep
+ * @param dt   The desired simulation timestep
  *
- *  @warning Needs PAPARAZZI_HOME defined to find the config files
+ * @warning Needs PAPARAZZI_HOME defined to find the config files
  */
 static void init_jsbsim(double dt) {
 
@@ -235,10 +240,11 @@ static void init_jsbsim(double dt) {
 
 }
 
-/** Initialize the ltp from the JSBSim location.
+/**
+ * Initialize the ltp from the JSBSim location.
  *
- *  @todo The magnetic field is hardcoded, make location dependent
- *        (might be able to use JSBSim sensors)
+ * @todo The magnetic field is hardcoded, make location dependent
+ * (might be able to use JSBSim sensors)
  */
 static void init_ltp(void) {
 
@@ -257,12 +263,13 @@ static void init_ltp(void) {
 
 }
 
-/** Convert JSBSim location format and struct to NPS location format and struct.
+/**
+ * Convert JSBSim location format and struct to NPS location format and struct.
  *
- *  JSBSim is in feet by default, NPS in metres
+ * JSBSim is in feet by default, NPS in metres
  *
- *  @param fdm_location Pointer to EcefCoor_d struct
- *  @param jsb_location Pointer to FGLocation struct
+ * @param fdm_location Pointer to EcefCoor_d struct
+ * @param jsb_location Pointer to FGLocation struct
  */
 static void jsbsimloc_to_loc(EcefCoor_d* fdm_location, const FGLocation* jsb_location){
 
@@ -272,12 +279,13 @@ static void jsbsimloc_to_loc(EcefCoor_d* fdm_location, const FGLocation* jsb_loc
 
 }
 
-/** Convert JSBSim vector format and struct to NPS vector format and struct.
+/**
+ * Convert JSBSim vector format and struct to NPS vector format and struct.
  *
- *  JSBSim is in feet by default, NPS in metres
+ * JSBSim is in feet by default, NPS in metres
  *
- *  @param fdm_vector    Pointer to DoubleVect3 struct
- *  @param jsb_vector    Pointer to FGColumnVector3 struct
+ * @param fdm_vector    Pointer to DoubleVect3 struct
+ * @param jsb_vector    Pointer to FGColumnVector3 struct
  */
 static void jsbsimvec_to_vec(DoubleVect3* fdm_vector, const FGColumnVector3* jsb_vector) {
 
@@ -287,10 +295,11 @@ static void jsbsimvec_to_vec(DoubleVect3* fdm_vector, const FGColumnVector3* jsb
 
 }
 
-/** Convert JSBSim quaternion struct to NPS quaternion struct.
+/**
+ * Convert JSBSim quaternion struct to NPS quaternion struct.
  *
- *  @param fdm_quat    Pointer to DoubleQuat struct
- *  @param jsb_quat    Pointer to FGQuaternion struct
+ * @param fdm_quat    Pointer to DoubleQuat struct
+ * @param jsb_quat    Pointer to FGQuaternion struct
  */
 static void jsbsimquat_to_quat(DoubleQuat* fdm_quat, const FGQuaternion* jsb_quat){
 
@@ -301,10 +310,11 @@ static void jsbsimquat_to_quat(DoubleQuat* fdm_quat, const FGQuaternion* jsb_qua
 
 }
 
-/** Convert JSBSim rates vector struct to NPS rates struct.
+/**
+ * Convert JSBSim rates vector struct to NPS rates struct.
  *
- *  @param fdm_rate    Pointer to DoubleRates struct
- *  @param jsb_vector  Pointer to FGColumnVector3 struct
+ * @param fdm_rate    Pointer to DoubleRates struct
+ * @param jsb_vector  Pointer to FGColumnVector3 struct
  */
 static void jsbsimvec_to_rate(DoubleRates* fdm_rate, const FGColumnVector3* jsb_vector) {
 
@@ -314,12 +324,13 @@ static void jsbsimvec_to_rate(DoubleRates* fdm_rate, const FGColumnVector3* jsb_
 
 }
 
-/** Convert JSBSim location to NPS LLH.
+/**
+ * Convert JSBSim location to NPS LLH.
  *
- *  Gets geodetic latitude, longitude and height above sea level in metres
+ * Gets geodetic latitude, longitude and height above sea level in metres
  *
- *  @param fdm_lla   Pointer to LlaCoor_d struct
- *  @param propagate Pointer to JSBSim FGPropagate object
+ * @param fdm_lla   Pointer to LlaCoor_d struct
+ * @param propagate Pointer to JSBSim FGPropagate object
  */
 void llh_from_jsbsim(LlaCoor_d* fdm_lla, FGPropagate* propagate) {
 
@@ -332,12 +343,13 @@ void llh_from_jsbsim(LlaCoor_d* fdm_lla, FGPropagate* propagate) {
 
 }
 
-/** Convert JSBSim location to NPS LLA.
+/**
+ * Convert JSBSim location to NPS LLA.
  *
- *  Gets geocentric latitude, longitude and geocentric radius
+ * Gets geocentric latitude, longitude and geocentric radius
  *
- *  @param fdm_lla   Pointer to LlaCoor_d struct
- *  @param propagate Pointer to JSBSim FGPropagate object
+ * @param fdm_lla   Pointer to LlaCoor_d struct
+ * @param propagate Pointer to JSBSim FGPropagate object
  */
 void lla_from_jsbsim_geocentric(LlaCoor_d* fdm_lla, FGPropagate* propagate) {
 
@@ -347,12 +359,13 @@ void lla_from_jsbsim_geocentric(LlaCoor_d* fdm_lla, FGPropagate* propagate) {
 
 }
 
-/** Convert JSBSim location to NPS LLA.
+/**
+ * Convert JSBSim location to NPS LLA.
  *
- *  Gets geodetic latitude, longitude and geodetic altitude in metres
+ * Gets geodetic latitude, longitude and geodetic altitude in metres
  *
- *  @param fdm_lla   Pointer to LlaCoor_d struct
- *  @param propagate Pointer to JSBSim FGPropagate object
+ * @param fdm_lla   Pointer to LlaCoor_d struct
+ * @param propagate Pointer to JSBSim FGPropagate object
  */
 void lla_from_jsbsim_geodetic(LlaCoor_d* fdm_lla, FGPropagate* propagate) {
 

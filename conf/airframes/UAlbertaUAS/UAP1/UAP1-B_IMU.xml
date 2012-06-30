@@ -296,7 +296,6 @@
 
     <define name="THROTTLE_SLEW_LIMITER" value="3" unit="s"/> <!-- min time from 0 to 100% throttle -->
     <!-- <define name="THROTTLE_SLEW" value="?????" unit="s"/> -->
-<!--
     <define name="AUTO_AIRSPEED_SETPOINT" value="21.0" unit="m/s"/>
     <define name="AUTO_AIRSPEED_PGAIN" value="0.060"/>
     <define name="AUTO_AIRSPEED_IGAIN" value="0.050"/> 
@@ -304,7 +303,6 @@
     <define name="AUTO_GROUNDSPEED_SETPOINT" value="20.0" unit="m/s"/>
     <define name="AUTO_GROUNDSPEED_PGAIN" value="0.75"/>
     <define name="AUTO_GROUNDSPEED_IGAIN" value="0.25"/>
--->
   </section>
 
 

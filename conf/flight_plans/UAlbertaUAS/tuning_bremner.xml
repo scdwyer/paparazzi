@@ -143,7 +143,7 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
 
 -->
 <!-- Change the root element to match your airspace -->
-<flight_plan alt="675" ground_alt="605" lat0="53.63836" lon0="-113.28607" max_dist_from_home="1000" name="Tuning_Bremner" security_height="25" qfu="270"> <!-- Bremner -->
+<flight_plan alt="675" ground_alt="605" lat0="53.63838" lon0="-113.28657" max_dist_from_home="1000" name="Tuning_Bremner" security_height="25" qfu="270"> <!-- Bremner -->
 
   <!-- The header section allows one to include advanced navigation routines and header files that allow access to variables that may be useful for exceptions or advanced flightplan routines dependent on various internal autopilot variables -->
   <header>
@@ -153,23 +153,26 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
   <!-- The waypoints section must contain 1 or more waypoints. For tuning, setup STDBY in a location in front of the pilot at least DEFAULT_CIRCLE_RADIUS metres away from the flight line if restricted to no overflights. Setup 1 and 2 in front of and to the right and left of the pilot, respectively, with waypoints 4 and 3 offset back away from the pilot further, so as to make a clockwise rectangle from waypoints 1-2-3-4. These are used for advanced course tuning and testing ovals and eights after tuning. Again, waypoints should be at least a radius away from the flight line (probably 1.5xRadius) to prevent overflights. HOME can be set somewhere in the vicinity of STDBY or the pilot. CLIMB is for takeoff (mostly for sim, should manually takeoff for tuning)-->
   <waypoints>
     <waypoint name="HOME" x="0" y="0"/>
-    <waypoint name="STDBY" x="30." y="100."/>
-    <waypoint name="1" x="100.1" y="70.9"/>
-    <waypoint name="2" x="-100.3" y="80.1"/>
-    <waypoint name="3" x="-100.3" y="195.1"/>
-    <waypoint name="4" x="100.1" y="185.1"/>
-    <waypoint name="CLIMB" x="-125.0" y="45.0"/>
+    <waypoint name="STDBY" x="30." y="130."/>
+    <waypoint name="1" x="100.1" y="100.9"/>
+    <waypoint name="2" x="-100.3" y="110.1"/>
+    <waypoint name="3" x="-100.3" y="225.1"/>
+    <waypoint name="4" x="100.1" y="215.1"/>
+    <waypoint name="CLIMB" x="-125.0" y="55.0"/>
+    <waypoint name="MOB" x="0" y="50"/>
+    <waypoint name="S1" x="-150.2" y="69.6"/>
+    <waypoint name="S2" x="150.4" y="209.5"/>
   </waypoints>
   <!-- The sectors section allows the definiton of regions of space from waypoints, useful for restricting flight area with exceptions -->
   <sectors/>
   <!-- The includes section allows predefined blocks of flightplan to be included -->
   <includes>
-    <include name="SoftKillOut" procedure="sectors/bremner_sectors_outside.xml"/>
+    <!-- <include name="SoftKillOut" procedure="sectors/bremner_sectors_outside.xml"/> -->
   </includes>
   <!-- The exceptions section allows for global error and failsafe handling -->
   <exceptions>
     <!-- <exception cond="datalink_time > 15" deroute="Standby"/> -->
-    <!-- <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/> -->
+    <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/>
     <!-- <exception cond="And(!InsideSoftKillOut(estimator_x, estimator_y),launch)" deroute="Standby"/> -->
   </exceptions>
   <!-- The blocks section contains each block of the flightplan, which actually make the aircraft do something -->
@@ -328,28 +331,28 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
     <!--	airspeed will take precedence as groundspeed set lower
     		setting pitch pgain to zero disables the auto pitch part of the airspeed loop, no climb control
     -->
-    <block name="Airspeed (Airspeed) Tuning">
+    <!--<block name="Airspeed (Airspeed) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="0.5*V_CTL_AUTO_AIRSPEED_SETPOINT"/> 
       <set var="v_ctl_auto_airspeed_setpoint" value="V_CTL_AUTO_AIRSPEED_SETPOINT"/>
       <set var="v_ctl_auto_pitch_pgain" value="0.0"/>
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="0.0"/>
       </while>
-    </block>
+    </block> -->
 
     <!-- groundspeed will take precedence as airspeed set lower
     	 setting pitch pgain to zero disables the auto pitch part of the airspeed loop, no climb control
     -->
-    <block name="Airspeed (Groundspeed) Tuning">
+    <!--<block name="Airspeed (Groundspeed) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="V_CTL_AUTO_GROUNDSPEED_SETPOINT"/>
       <set var="v_ctl_auto_airspeed_setpoint" value="0.5*V_CTL_AUTO_GROUNDSPEED_SETPOINT"/>
       <set var="v_ctl_auto_pitch_pgain" value="0.0"/>
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="0.0"/>
       </while>
-    </block>
+    </block>-->
     <!-- airspeed should be tuned now, use in addition to pitch, airspeed will take precedence (coupled with climb more than groundspeed) -->
-    <block name="Airspeed (Auto Pitch) Tuning">
+    <!--<block name="Airspeed (Auto Pitch) Tuning">
       <set var="v_ctl_auto_groundspeed_setpoint" value="0.5*V_CTL_AUTO_AIRSPEED_SETPOINT"/>
       <set var="v_ctl_auto_airspeed_setpoint" value="V_CTL_AUTO_AIRSPEED_SETPOINT"/>
       <set var="v_ctl_auto_pitch_pgain" value="V_CTL_AUTO_PITCH_PGAIN"/>
@@ -357,7 +360,7 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
       <while cond="TRUE">
       	<attitude roll="0.0" vmode="climb" climb="nav_climb"/>
       </while>
-    </block>
+    </block>-->
 
     <!-- extra typical blocks for testing after tuning -->
     <block key="F8" name="Figure 8 around wp 1" strip_button="Figure 8 (wp 1-2)" strip_icon="eight.png" group="base_pattern">
@@ -369,6 +372,19 @@ something like 20m/s*15s = 300m away, so do a 15sec timeout on blocks?
     <block name="Line 1-2" strip_button="Line (wp 1-2)" strip_icon="line.png" group="base_pattern">
       <call fun="nav_line_init()"/>
       <call fun="nav_line(WP_1, WP_2, nav_radius)"/>
+    </block>
+    <block name="MOB" strip_button="Turn around here" strip_icon="mob.png" group="base_pattern">
+      <call fun="NavSetWaypointHere(WP_MOB)"/>
+      <set value="DEFAULT_CIRCLE_RADIUS" var="nav_radius"/>
+      <circle radius="nav_radius" wp="MOB"/>
+    </block>
+    <block name="Survey S1-S2" strip_button="Survey (wp S1-S2)" strip_icon="survey.png" group="extra_pattern">
+      <survey_rectangle grid="150" wp1="S1" wp2="S2"/>
+    </block>
+    <block name="Path 1,S1,2,1,4,3,1,S2,STDBY" strip_button="Path (1,S1,2,1,4,3,1,S2,STDBY)" strip_icon="path.png" group="extra_pattern">
+      <path wpts="1,S1,2,1,4"/>
+      <path wpts="3, 1, S2" approaching_time="1" pitch="auto" throttle="0.21"/>
+      <deroute block="Standby"/>
     </block>
 
   </blocks>

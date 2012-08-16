@@ -1,6 +1,4 @@
 (*
- * $Id$
- *
  * GUI to save settings in the airframe file
  *
  * Copyright (C) 2008, Cyril Allignol, Pascal Brisset
@@ -32,7 +30,8 @@ let col_index = cols#add Gobject.Data.int
 let col_param = cols#add Gobject.Data.string
 and col_airframe_value = cols#add Gobject.Data.float
 and col_settings_value = cols#add Gobject.Data.float
-and col_settings_scaled_value = cols#add Gobject.Data.float
+and col_airframe_value_new = cols#add Gobject.Data.float
+and col_code_value = cols#add Gobject.Data.float
 and col_to_save = cols#add Gobject.Data.boolean
 
 let (//) = Filename.concat
@@ -43,21 +42,12 @@ let floats_not_equal = fun f1 f2 ->
   let r = abs_float (f1 /. f2) in
   r < 0.999 || r > 1.001
 
-(* Unit conversions *)
-let scale_of_units = fun u1 u2  ->
-  match u1, u2 with
-    "deg", "rad" -> 180. /. Latlong.pi
-  | "rad", "deg" -> Latlong.pi /. 180.
-  | u1, u2 when u1 = u2 -> 1.
-  | _ -> invalid_arg (Printf.sprintf "SaveSettings.scale_of_units %s %s" u1 u2)
-
-
 
 (** The save file dialog box *)
 let save_airframe = fun w filename save ->
   match GToolbox.select_file ~title:"Save Airframe" ~filename () with
-    None -> ()
-  | Some file ->
+      None -> ()
+    | Some file ->
       save file;
       w#save_settings#destroy ()
 
@@ -77,7 +67,7 @@ let display_columns = fun w model ->
     let renderer = GTree.cell_renderer_text [`XALIGN 0.] in
     let vc = GTree.view_column ~title ~renderer:(renderer, ["text", col]) () in
     vc#set_clickable true;
-  ignore (w#treeview_settings#append_column vc))
+    ignore (w#treeview_settings#append_column vc))
     text_columns;
   let renderer = GTree.cell_renderer_toggle [`XALIGN 0.] in
   let vc = GTree.view_column ~renderer:(renderer, ["active", col_to_save]) () in
@@ -102,7 +92,7 @@ let write_xml = fun (model:GTree.tree_store) old_file airframe_xml file ->
   let new_xml = ref airframe_xml in
   model#foreach (fun _path row ->
     if model#get ~row ~column:col_to_save then begin
-      let new_value = model#get ~row ~column:col_settings_scaled_value
+      let new_value = model#get ~row ~column:col_airframe_value_new
       and param = model#get ~row ~column:col_param in
       new_xml := EditAirframe.set !new_xml param (string_of_float new_value)
     end;
@@ -117,13 +107,13 @@ let write_xml = fun (model:GTree.tree_store) old_file airframe_xml file ->
 
 
 let send_airframe_values = fun (model:GTree.tree_store) send_value ->
-   model#foreach (fun _path row ->
-     if model#get ~row ~column:col_to_save then begin
-       let index = model#get ~row ~column:col_index
-       and airframe_value = model#get ~row ~column:col_airframe_value in
-       send_value index airframe_value
-     end;
-     false)
+  model#foreach (fun _path row ->
+    if model#get ~row ~column:col_to_save then begin
+      let index = model#get ~row ~column:col_index
+      and code_value = model#get ~row ~column:col_code_value in
+      send_value index code_value
+    end;
+    false)
 
 
 
@@ -133,33 +123,67 @@ let fill_data = fun (model:GTree.tree_store) settings airframe_xml ->
     let attrib = fun a -> Xml.attrib dl_setting a in
     try
       let param = attrib "param" in
-      let (airframe_value, unit) = EditAirframe.get airframe_xml param in
-      let scale =
-	try
-	  let unit_setting = attrib "unit"
-	  and unit_airframe =
-	    match unit with Some u -> u | None -> raise Exit in
-	  scale_of_units unit_setting unit_airframe
-	with
-	  _ -> 1. in
-      let scaled_value =
-	try
-	  float_of_string airframe_value *. scale
-	with
-	  Failure "float_of_string" -> raise (EditAirframe.No_param param)
+      let (airframe_value, airframe_unit, code_unit) = EditAirframe.get airframe_xml param in
+      (*
+       * Get the scaling between the unit set in the airframe file to the real unit used (code_unit)
+       * Print error and use a factor of 1 when code_unit (in airframe file) and unit (in settings file) not equal
+       *)
+      let unit_setting = try Some (attrib "unit") with _ -> None in
+      let airframe_scale =
+        try
+          let unit_code =
+            match code_unit, unit_setting with
+            | Some uc, Some us ->
+                if uc = us then uc
+                else invalid_arg (Printf.sprintf "Warning: code unit in airframe (%s) and setting file (%s) are not matching for param %s\n" uc us param) (* raise Invalid_argument *)
+            | Some u, None | None, Some u -> u
+            | None, None -> ""
+          and unit_airframe =
+            match airframe_unit with
+            | Some u -> u
+            | None -> ""
+          in
+          (* Printf.fprintf stderr "param %s: unit_code=%s unit_airframe=%s\n" param unit_code unit_airframe; flush stderr; *)
+          Pprz.scale_of_units unit_airframe unit_code
+        with
+          | Invalid_argument s -> prerr_endline s; flush stderr; raise Exit
+          |  _ -> 1.
       in
-
+      (*
+       * settings are displayed in alt_unit specified in settings file
+       * first try the alt_coef, otherwise try to convert the units
+       *)
+      let display_scale = float_of_string (Pprz.alt_unit_coef_of_xml dl_setting) in
+      let val_list = Str.split (Str.regexp "[ ()]+") airframe_value in
+      let (scale_macros, str_val) = List.partition (fun x -> Str.string_match (Str.regexp "RadOfDeg\\|DegOfRad") x 0) val_list in
+      let extra_scale =
+        try
+          match (List.hd scale_macros) with
+              "RadOfDeg" -> Latlong.pi /. 180.
+            | "DegOfRad" -> 180. /. Latlong.pi
+            | _ -> 1.
+        with
+            _ -> 1. in
+      let airframe_value_scaled =
+        try
+          float_of_string (List.hd str_val) *. airframe_scale *. extra_scale
+        with
+            Failure "float_of_string" -> raise (EditAirframe.No_param param)
+      in
+      let airframe_value_new = value /. airframe_scale in
+      (* Printf.fprintf stderr "param %s: airframe_scale=%f display_scale=%f extra_scale=%f\n" param airframe_scale display_scale extra_scale; flush stderr; *)
       let row = model#append () in
       model#set ~row ~column:col_index index;
       model#set ~row ~column:col_param param;
-      model#set ~row ~column:col_airframe_value scaled_value;
-      model#set ~row ~column:col_settings_value value;
-      model#set ~row ~column:col_settings_scaled_value (value /. scale);
-      model#set ~row ~column:col_to_save (floats_not_equal scaled_value value)
+      model#set ~row ~column:col_airframe_value (airframe_value_scaled *. display_scale);
+      model#set ~row ~column:col_settings_value (value *. display_scale);
+      model#set ~row ~column:col_airframe_value_new airframe_value_new;
+      model#set ~row ~column:col_code_value value;
+      model#set ~row ~column:col_to_save (floats_not_equal airframe_value_scaled value)
     with
-      Xml.No_attribute _ -> ()
-    | EditAirframe.No_param param ->
-	not_in_airframe_file := param :: !not_in_airframe_file ) (* Not savable *)
+        Xml.No_attribute _ | Exit -> ()
+      | EditAirframe.No_param param ->
+        not_in_airframe_file := param :: !not_in_airframe_file ) (* Not savable *)
     settings;
 
   (* Warning if needed *)

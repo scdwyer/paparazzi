@@ -323,7 +323,7 @@ static inline void gps_ubx_ucenter_enable_msg(uint8_t class, uint8_t id, uint8_t
 #define DOWNLINK_DEVICE DOWNLINK_AP_DEVICE
 #endif
 #undef GOT_PAYLOAD
-#include "downlink.h"
+#include "subsystems/datalink/downlink.h"
 
 static bool_t gps_ubx_ucenter_configure(uint8_t nr)
 {
@@ -352,7 +352,7 @@ static bool_t gps_ubx_ucenter_configure(uint8_t nr)
     gps_ubx_ucenter.replies[3] = gps_ubx_ucenter.sw_ver_l;
     gps_ubx_ucenter.replies[4] = gps_ubx_ucenter.hw_ver_h;
     gps_ubx_ucenter.replies[5] = gps_ubx_ucenter.hw_ver_l;
-    DOWNLINK_SEND_DEBUG(DefaultChannel,6,gps_ubx_ucenter.replies);
+    DOWNLINK_SEND_DEBUG(DefaultChannel, DefaultDevice,6,gps_ubx_ucenter.replies);
 
     //////////////////////////////////
     // Actual configuration start
@@ -379,7 +379,11 @@ static bool_t gps_ubx_ucenter_configure(uint8_t nr)
     gps_ubx_ucenter_enable_msg(UBX_NAV_ID, UBX_NAV_SVINFO_ID, 4);
     break;
   case 11:
+#if defined FIRMWARE && FIRMWARE == ROTORCRAFT
+    gps_ubx_ucenter_enable_msg(UBX_NAV_ID, UBX_NAV_SOL_ID, 1);
+#else
     gps_ubx_ucenter_enable_msg(UBX_NAV_ID, UBX_NAV_SOL_ID, 8);
+#endif
     break;
   case 12:
     // Disable UTM on old Lea4P
@@ -397,7 +401,7 @@ static bool_t gps_ubx_ucenter_configure(uint8_t nr)
     break;
   case 16:
     // Debug Downlink the result of all configuration steps: see messages
-    DOWNLINK_SEND_DEBUG(DefaultChannel,GPS_UBX_UCENTER_CONFIG_STEPS,gps_ubx_ucenter.replies);
+    DOWNLINK_SEND_DEBUG(DefaultChannel, DefaultDevice,GPS_UBX_UCENTER_CONFIG_STEPS,gps_ubx_ucenter.replies);
     return FALSE;
   default:
     break;

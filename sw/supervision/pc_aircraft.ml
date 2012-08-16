@@ -40,11 +40,11 @@ let aircraft_sample = fun name ac_id ->
   Xml.Element ("aircraft",
 	       ["name", name;
 		"ac_id", ac_id;
-		"airframe", "airframes/microjet_example.xml";
+		"airframe", "airframes/examples/microjet.xml";
 		"radio", "radios/cockpitSX.xml";
-		"telemetry", "telemetry/default.xml";
+		"telemetry", "telemetry/default_fixedwing.xml";
 		"flight_plan", "flight_plans/basic.xml";
-		"settings", "settings/basic.xml";
+		"settings", "settings/fixedwing_basic.xml";
 		"gui_color", "blue"],
 	       [])
 
@@ -361,7 +361,8 @@ let build_handler = fun ~file gui ac_combo (target_combo:Gtk_tools.combo) (log:s
   (* Link target to upload button *)
   Gtk_tools.combo_connect target_combo
     (fun target ->
-      gui#button_upload#misc#set_sensitive (target <> "sim"));
+      (* if target is sim or nps, deactivate the upload button *)
+      gui#button_upload#misc#set_sensitive (target <> "sim" && target <> "nps"));
 
   (* New Target button *)
   let callback = fun _ ->

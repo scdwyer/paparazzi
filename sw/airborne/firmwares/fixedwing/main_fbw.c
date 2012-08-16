@@ -35,7 +35,7 @@
 
 #include "firmwares/fixedwing/main_fbw.h"
 #include "mcu.h"
-#include "sys_time.h"
+#include "mcu_periph/sys_time.h"
 #include "commands.h"
 #include "firmwares/fixedwing/actuators.h"
 #include "subsystems/electrical.h"
@@ -43,6 +43,7 @@
 #include "firmwares/fixedwing/autopilot.h"
 #include "fbw_downlink.h"
 #include "paparazzi.h"
+#include "mcu_periph/i2c.h"
 
 #ifdef MCU_SPI_LINK
 #include "link_mcu.h"
@@ -55,12 +56,14 @@ uint8_t fbw_mode;
 
 volatile uint8_t fbw_new_actuators = 0;
 
+tid_t fbw_periodic_tid; ///< id for periodic_task_fbw() timer
+tid_t electrical_tid;   ///< id for electrical_periodic() timer
 
 /********** INIT *************************************************************/
 void init_fbw( void ) {
 
   mcu_init();
-  sys_time_init();
+
   electrical_init();
 
 #ifdef ACTUATORS
@@ -80,6 +83,10 @@ void init_fbw( void ) {
 #endif
 
   fbw_mode = FBW_MODE_FAILSAFE;
+
+  /**** start timers for periodic functions *****/
+  fbw_periodic_tid = sys_time_register_timer((1./60.), NULL);
+  electrical_tid = sys_time_register_timer(0.1, NULL);
 
 #ifndef SINGLE_MCU
   mcu_int_enable();
@@ -113,6 +120,7 @@ void event_task_fbw( void) {
   RadioControlEvent(handle_rc_frame);
 #endif
 
+  i2c_event();
 
 #ifdef INTER_MCU
 #ifdef MCU_SPI_LINK
@@ -123,6 +131,8 @@ void event_task_fbw( void) {
   if (inter_mcu_received_ap) {
     inter_mcu_received_ap = FALSE;
     inter_mcu_event_task();
+    command_roll_trim = ap_state->command_roll_trim;
+    command_pitch_trim = ap_state->command_pitch_trim;
     if (ap_ok && fbw_mode == FBW_MODE_FAILSAFE) {
       fbw_mode = FBW_MODE_AUTO;
     }
@@ -162,8 +172,6 @@ void event_task_fbw( void) {
 #endif
 
 
-
-
 #ifdef MCU_SPI_LINK
   if (link_mcu_received) {
     link_mcu_received = FALSE;
@@ -178,9 +186,6 @@ void event_task_fbw( void) {
 
 /************* PERIODIC ******************************************************/
 void periodic_task_fbw( void ) {
-  static uint8_t _10Hz; /* FIXME : sys_time should provide it */
-  _10Hz++;
-  if (_10Hz >= 6) _10Hz = 0;
 
 #ifdef RADIO_CONTROL
   radio_control_periodic_task();
@@ -201,8 +206,14 @@ void periodic_task_fbw( void ) {
   fbw_downlink_periodic_task();
 #endif
 
-  if (!_10Hz) {
+}
+
+void handle_periodic_tasks_fbw(void) {
+
+  if (sys_time_check_and_ack_timer(fbw_periodic_tid))
+    periodic_task_fbw();
+
+  if (sys_time_check_and_ack_timer(electrical_tid))
     electrical_periodic();
-  }
 
 }

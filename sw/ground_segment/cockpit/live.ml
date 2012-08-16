@@ -1193,7 +1193,7 @@ let listen_flight_params = fun geomap auto_center_new_ac alert alt_graph ->
         match ap_mode with
           "AUTO2" | "NAV" -> ok_color
         | "AUTO1" | "R_RCC" | "A_RCC" | "ATT_C" | "R_ZH" | "A_ZH" | "HOVER" | "HOV_C" | "H_ZH" -> "#10F0E0"
-        | "MANUAL" | "RATE" | "ATT" -> warning_color
+        | "MANUAL" | "RATE" | "ATT" | "RC_D" -> warning_color
         | _ -> alert_color in
       ac.strip#set_color "AP" color;
     end;
@@ -1278,7 +1278,7 @@ let message_request = Ground_Pprz.message_req
 
 let get_ts = fun _sender vs ->
   let ac = get_ac vs in
-  let t = Pprz.float_assoc "time_since_last_bat_msg" vs in
+  let t = Pprz.float_assoc "time_since_last_msg" vs in
   ac.strip#set_label "telemetry_status" (if t > 2. then sprintf "%.0f" t else "   ");
   ac.strip#set_color "telemetry_status" (if t > 5. then alert_color else ok_color)
 

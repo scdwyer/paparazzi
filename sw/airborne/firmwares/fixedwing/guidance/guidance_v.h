@@ -1,6 +1,4 @@
 /*
- * Paparazzi $Id$
- *
  * Copyright (C) 2006  Pascal Brisset, Antoine Drouin
  *
  * This file is part of paparazzi.
@@ -19,12 +17,11 @@
  * along with paparazzi; see the file COPYING.  If not, write to
  * the Free Software Foundation, 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
- *
  */
 
 /**
- *
- * fixed wing vertical control
+ * @file firmwares/fixedwing/guidance/guidance_v.h
+ * Vertical control for fixed wing vehicles.
  *
  */
 
@@ -43,8 +40,8 @@
 extern uint8_t v_ctl_mode;
 
 /* outer loop */
-extern float v_ctl_altitude_error;
-extern float v_ctl_altitude_setpoint;
+extern float v_ctl_altitude_error;    ///< in meters, (setpoint - alt) -> positive = too low
+extern float v_ctl_altitude_setpoint; ///< in meters above MSL
 extern float v_ctl_altitude_pre_climb;
 extern float v_ctl_altitude_pgain;
 extern float v_ctl_altitude_pre_climb_correction;
@@ -74,11 +71,6 @@ extern float v_ctl_auto_throttle_sum_err;
 extern float v_ctl_auto_throttle_pitch_of_vz_pgain;
 extern float v_ctl_auto_throttle_pitch_of_vz_dgain;
 
-#ifdef LOITER_TRIM
-extern float v_ctl_auto_throttle_loiter_trim;
-extern float v_ctl_auto_throttle_dash_trim;
-#endif
-
 /* agressive tuning */
 #ifdef TUNE_AGRESSIVE_CLIMB
 extern float agr_climb_throttle;
@@ -101,7 +93,7 @@ extern void v_ctl_init( void );
 extern void v_ctl_altitude_loop( void );
 extern void v_ctl_climb_loop ( void );
 
-#ifdef USE_AIRSPEED
+#if USE_AIRSPEED
 /* "airspeed" inner loop parameters */
 extern float v_ctl_auto_airspeed_setpoint;
 extern float v_ctl_auto_airspeed_controlled;

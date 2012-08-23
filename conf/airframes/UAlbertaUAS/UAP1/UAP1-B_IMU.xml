@@ -15,6 +15,8 @@
 
      Additional Notes:
      -currently not fully tuned, slow dynamics make tuning difficult
+     -tuning especially difficult for the vertical guidance loops
+     -updated for v4.0 change in gain signs and units
 -->
 
 <airframe name="UAP1-B">
@@ -74,7 +76,10 @@
       <define name="AIRSPEED_ETS_I2C_DEV" value="i2c1"/>
       <define name="SENSOR_SYNC_SEND"/>
     </load>
-    <!-- <load name="send_datalink_time.xml"/> -->
+    <load name="pwm_meas.xml"/>
+    <load name="xtend_rssi.xml">
+      <configure name="XTEND_RSSI_PWM_INPUT_CHANNEL" value="1"/>
+    </load>
     <!--
     <load name="flight_benchmark.xml">
       <define name="BENCHMARK_AIRSPEED"/>
@@ -164,29 +169,31 @@
 
 <!-- with this failsafe section inner stabilization loops still active -->
   <section name="FAILSAFE" prefix="FAILSAFE_">
-    <define name="DELAY_WITHOUT_GPS" value="2" unit="s"/>
+    <define name="DELAY_WITHOUT_GPS" value="2.0" unit="s"/>
     <define name="DEFAULT_THROTTLE" value="0.1" unit="%"/>
     <define name="DEFAULT_ROLL" value="10.0" unit="deg"/>
     <define name="DEFAULT_PITCH" value="0.0" unit="deg"/>
-    <define name="HOME_RADIUS" value="80" unit="m"/>
+    <define name="HOME_RADIUS" value="80.0" unit="m"/>
     <define name="KILL_MODE_DISTANCE" value="(MAX_DIST_FROM_HOME*1.5)"/>
   </section>
 
   <section name="AUTO1" prefix="AUTO1_">
-    <define name="MAX_ROLL" value="0.9"/>
-    <define name="MAX_PITCH" value="0.6"/>
+    <define name="MAX_ROLL" value="55.0" unit="deg"/>
+    <define name="MAX_PITCH" value="35.0" unit="deg"/>
   </section>
 
   <section name="INS" prefix="INS_">
-    <define name="ROLL_NEUTRAL_DEFAULT" value="0.0"/>
-    <define name="PITCH_NEUTRAL_DEFAULT" value="0.025"/>
+    <define name="ROLL_NEUTRAL_DEFAULT" value="0.0" unit="deg"/>
+    <define name="PITCH_NEUTRAL_DEFAULT" value="1.5" unit="deg"/>
   </section>
 
   <!-- Local magnetic field -->
+  <!-- from sept 27, 2012 for edmonton AB
+  [0.24306642989720345, 0.06617967564829384, 0.9677494309934336] -->
   <section name="AHRS" prefix="AHRS_" >
-    <define name="H_X" value="0.51562740288882" />
-    <define name="H_Y" value="-0.05707735220832" />
-    <define name="H_Z" value="0.85490967783446" />
+    <define name="H_X" value="0.24306642989720" />
+    <define name="H_Y" value="0.06617967564829" />
+    <define name="H_Z" value="0.96774943099343" />
   </section>
 
   <section name="IMU" prefix="IMU_">
@@ -229,9 +236,9 @@
     <define name="MAG_XZ_SENS" value="0.0" integer="16"/>
     <define name="MAG_YZ_SENS" value="0.0" integer="16"/>
 
-    <define name="BODY_TO_IMU_PHI" value="0"/> <!-- roll -->
-    <define name="BODY_TO_IMU_THETA" value="0"/> <!-- pitch -->
-    <define name="BODY_TO_IMU_PSI" value="0"/> <!-- yaw -->
+    <define name="BODY_TO_IMU_PHI" value="0.0"/> <!-- roll -->
+    <define name="BODY_TO_IMU_THETA" value="0.0"/> <!-- pitch -->
+    <define name="BODY_TO_IMU_PSI" value="0.0"/> <!-- yaw -->
     <!-- can also define channel for each x,y,z for weird orientations etc, should be defaults? -->
   </section>
 
@@ -255,7 +262,7 @@
     <!-- <define name="KILL_MODE_DISTANCE" value="(1.5*MAX_DIST_FROM_HOME)"/> -->
     <define name="CONTROL_RATE" value="60" unit="Hz"/>
     <define name="ALT_KALMAN_ENABLED" value="TRUE"/>
-    <define name="DEFAULT_CIRCLE_RADIUS" value="75."/>
+    <define name="DEFAULT_CIRCLE_RADIUS" value="75." unit="m"/>
 
     <!-- <define name="GLIDE_AIRSPEED" value="14"/> -->
     <!-- <define name="GLIDE_VSPEED" value="1.5"/> -->
@@ -270,7 +277,7 @@
     <define name="THROTTLE_IDLE" value="0.01"/> <!-- bounds the throttle setpoint between idle*max_pprz and max_pprz -->
     <!-- Altitude loop: outer stage of vert control -->
     <!-- outer loop proportional gain -->
-    <define name="ALTITUDE_PGAIN" value="-0.085"/>
+    <define name="ALTITUDE_PGAIN" value="0.085"/>
     <!-- outer loop saturation -->
     <define name="ALTITUDE_MAX_CLIMB" value="3.5"/> <!-- in one log file, saw a max around 5m/s -->
 
@@ -281,21 +288,21 @@
     <define name="AUTO_THROTTLE_LOITER_TRIM" value="500"/> <!-- value added to elevator in pprz_t under loiter -->
     <define name="AUTO_THROTTLE_DASH_TRIM" value="0"/> <!-- value added to elevator in pprz_t under dash -->
     <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.03" unit="%/(m/s)"/>
-    <define name="AUTO_THROTTLE_PGAIN" value="-0.02"/>
+    <define name="AUTO_THROTTLE_PGAIN" value="0.02"/>
     <define name="AUTO_THROTTLE_IGAIN" value="0.09"/>
     <define name="AUTO_THROTTLE_DGAIN" value="0.2"/>
     <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.05"/>
     <define name="AUTO_THROTTLE_PITCH_OF_VZ_DGAIN" value="0.0"/>
 
     <!-- auto pitch inner loop: climb loop: intermediate vert control stage; guidance_v.c -->
-    <define name="AUTO_PITCH_PGAIN" value="-0.04"/>
+    <define name="AUTO_PITCH_PGAIN" value="0.04"/>
     <define name="AUTO_PITCH_IGAIN" value="0.0"/>
     <!-- <define name="AUTO_PITCH_DGAIN" value="0.0"/> -->
     <define name="AUTO_PITCH_MAX_PITCH" value="0.35"/>
     <define name="AUTO_PITCH_MIN_PITCH" value="-0.35"/>
 
     <define name="THROTTLE_SLEW_LIMITER" value="3" unit="s"/> <!-- min time from 0 to 100% throttle -->
-    <!-- <define name="THROTTLE_SLEW" value="?????" unit="s"/> -->
+    <!--
     <define name="AUTO_AIRSPEED_SETPOINT" value="21.0" unit="m/s"/>
     <define name="AUTO_AIRSPEED_PGAIN" value="0.060"/>
     <define name="AUTO_AIRSPEED_IGAIN" value="0.050"/> 
@@ -303,12 +310,13 @@
     <define name="AUTO_GROUNDSPEED_SETPOINT" value="20.0" unit="m/s"/>
     <define name="AUTO_GROUNDSPEED_PGAIN" value="0.75"/>
     <define name="AUTO_GROUNDSPEED_IGAIN" value="0.25"/>
+    -->
   </section>
 
 
   <section name="HORIZONTAL CONTROL" prefix="H_CTL_"> <!-- found in stabilization_attitude.c -->
     <!-- Course loop: upper stage of horiz control -->
-    <define name="COURSE_PGAIN" value="-1.0"/> <!-- multiplied by error in heading for part of roll_setpoint -->
+    <define name="COURSE_PGAIN" value="1.0"/> <!-- multiplied by error in heading for part of roll_setpoint -->
     <!-- <define name="SPEED_DEPEND_NAV" value="??"/> --> <!-- multiplied with COURSE_PGAIN?? -->
     <!-- <define name="COURSE_DGAIN" value="0.0"/> --> <!-- d gain for course, comes after pgain, then added back for roll_setpoint -->
     <!-- <define name="COURSE_PRE_BANK_CORRECTION" value="??"/> --> <!-- multiplied by course_pre_bank?? and added to roll_setpoint -->
@@ -320,13 +328,13 @@
     <!-- Roll loop: lower stage of horiz control, used for lateral attitude stabilization -->
     <!-- <define name="ROLL_PGAIN" value="100."/> -->
     <!-- <define name="ROLL_IGAIN" value="6000."/> -->
-    <define name="ROLL_ATTITUDE_GAIN" value="-19000."/> <!-- if not defined, falls back to ROLL_PGAIN attitude only loop -->
-    <define name="ROLL_RATE_GAIN" value="-1500."/>
+    <define name="ROLL_ATTITUDE_GAIN" value="19000."/> <!-- if not defined, falls back to ROLL_PGAIN attitude only loop -->
+    <define name="ROLL_RATE_GAIN" value="1500."/>
     <!-- <define name="ROLL_SLEW" value="0.1"/> ???? 0.1 to 1.0???-->
     <define name="AILERON_OF_THROTTLE" value="0.0"/> <!-- used to correct throttle-dependent roll, best fixed mechanically -->
 
     <!-- Pitch loop: lower stage of vert control, used for longitudinal attitude stabilization -->
-    <define name="PITCH_PGAIN" value="-12000."/>
+    <define name="PITCH_PGAIN" value="12000."/>
     <!-- <define name="PITCH_IGAIN" value="-1700."/> -->
     <define name="PITCH_DGAIN" value="1.5"/>
     <define name="ELEVATOR_OF_ROLL" value="1000"/> <!-- must be greater than 0 -->

@@ -39,8 +39,9 @@ static bool_t gps_ubx_ucenter_autobaud(uint8_t nr);
 static bool_t gps_ubx_ucenter_configure(uint8_t nr);
 
 #define GPS_UBX_UCENTER_STATUS_STOPPED    0
-#define GPS_UBX_UCENTER_STATUS_AUTOBAUD   1
-#define GPS_UBX_UCENTER_STATUS_CONFIG     2
+#define GPS_UBX_UCENTER_STATUS_HOTSTART   1
+#define GPS_UBX_UCENTER_STATUS_AUTOBAUD   2
+#define GPS_UBX_UCENTER_STATUS_CONFIG     3
 
 #define GPS_UBX_UCENTER_REPLY_NONE        0
 #define GPS_UBX_UCENTER_REPLY_ACK         1
@@ -57,7 +58,7 @@ struct gps_ubx_ucenter_struct gps_ubx_ucenter;
 void gps_ubx_ucenter_init(void)
 {
   // Start UCenter
-  gps_ubx_ucenter.status = GPS_UBX_UCENTER_STATUS_AUTOBAUD;
+  gps_ubx_ucenter.status = GPS_UBX_UCENTER_STATUS_HOTSTART;
   gps_ubx_ucenter.reply = GPS_UBX_UCENTER_REPLY_NONE;
   gps_ubx_ucenter.cnt = 0;
 
@@ -87,6 +88,22 @@ void gps_ubx_ucenter_periodic(void)
     // Save processing time inflight
     case GPS_UBX_UCENTER_STATUS_STOPPED:
       return;
+    // Send Hot Start reset to ensure working
+    case GPS_UBX_UCENTER_STATUS_HOTSTART:
+    #pragma message "Using Hotstart"
+      // Get the 0.75sec delay...
+      if (gps_ubx_ucenter.cnt < 3)
+      {
+        gps_ubx_ucenter.cnt++;
+      }
+      else
+      {
+        GpsUartSetBaudrate(B9600); // Default baud is 9600, need ot use this to convince it to work
+        UbxSend_CFG_RST(0x0000,0x02,0x00); // Hotstart, Controlled Software reset (GPS only), reserved
+        gps_ubx_ucenter.status = GPS_UBX_UCENTER_STATUS_AUTOBAUD;
+        gps_ubx_ucenter.cnt = 0;
+      }
+      break;
     // Automatically Determine Current Baudrate
     case GPS_UBX_UCENTER_STATUS_AUTOBAUD:
       if (gps_ubx_ucenter_autobaud(gps_ubx_ucenter.cnt) == FALSE)

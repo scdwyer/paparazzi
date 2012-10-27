@@ -132,11 +132,18 @@ static inline int imu_from_buff(volatile uint8_t *buf)
   My = (int16_t) ((buf[2+MPU_OFFSET_MAG] << 8) | buf[3+MPU_OFFSET_MAG]);
   Mz = (int16_t) ((buf[4+MPU_OFFSET_MAG] << 8) | buf[5+MPU_OFFSET_MAG]);
 
-#ifdef LISA_M_LONGITUDINAL_X
+#if LISA_M_LONGITUDINAL_X
+#pragma message "Using Longitudinal X orientation"
   RATES_ASSIGN(imu.gyro_unscaled, q, -p, r);
   VECT3_ASSIGN(imu.accel_unscaled, y, -x, z);
   VECT3_ASSIGN(imu.mag_unscaled, -Mx, -Mz, My);
+#elif LISA_M_XPORT_YUP_ZFRONT
+#pragma message "Using UAP3 orientation"
+  RATES_ASSIGN(imu.gyro_unscaled, r, -p, -q);
+  VECT3_ASSIGN(imu.accel_unscaled, z, -x, -y);
+  VECT3_ASSIGN(imu.mag_unscaled, Mz, -My, Mx);
 #else
+#pragma message "using default orientation"
   RATES_ASSIGN(imu.gyro_unscaled, p, q, r);
   VECT3_ASSIGN(imu.accel_unscaled, x, y, z);
   VECT3_ASSIGN(imu.mag_unscaled, Mz, -Mx, My);

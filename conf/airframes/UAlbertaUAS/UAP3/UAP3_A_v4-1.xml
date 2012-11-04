@@ -86,7 +86,7 @@
     <!-- Actuators -->
     <subsystem name="control" type="energy"/>
     <!-- Sensors -->
-    <subsystem name="navigation"/>
+    <subsystem name="navigation" type="extra"/>
     <subsystem name="gps" type="ublox">
       <configure name="GPS_PORT" value="UART3"/>
     </subsystem>
@@ -112,12 +112,12 @@
     </load>
 -->
 
-    <!-- <load name="digital_cam.xml">
-      <define name="DC_SHUTTER_LED" value="12"/> LED 12 is on PC12 on GPIO connector
-      <define name="DC_SHUTTER_DELAY" value="1"/> at 4Hz gives 0.25s shutter trigger pulse
-    </load> -->
+    <load name="digital_cam.xml">
+      <define name="DC_SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector -->
+      <define name="DC_SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
+    </load>
 
-    <!-- <load name="photogrammetry_calculator.xml"/> -->
+    <load name="photogrammetry_calculator.xml"/>
 
 <!--
     <load name="nav_catapult.xml"/>
@@ -147,12 +147,28 @@
   </rc_commands>
 
   <command_laws>
+    <!-- <let var="enable_mix" value="((fbw_mode > 0) ? 1 : 0)"/>
+    <let var="yaw_mixed" value="((float(@ROLL)) * YAW_OF_ROLL_MIX * (float($enable_mix)))"/> -->
     <set servo="AILEVON_LEFT" value="@ROLL"/>
     <set servo="AILEVON_RIGHT" value="-@ROLL"/>
     <set servo="THROTTLE" value="@THROTTLE"/>
     <set servo="ELEVATOR" value="@PITCH"/>
     <set servo="RUDDER" value="@YAW"/>
+    <!-- <set servo="RUDDER" value="@YAW + $yaw_mixed"/> -->
   </command_laws>
+
+  <!-- ADD SOME RUDDER MIXING!!!! -->
+  <section name="MIXER">
+    <define name="YAW_OF_ROLL_MIX" value="0.3f"/>
+  </section>
+
+  <!-- <auto_rc_commands> -->
+    <!-- No rc yaw in auto modes -->
+  <!-- </auto_rc_commands> -->
+
+  <ap_only_commands>
+   <!-- no commands only available in AP -->
+ </ap_only_commands>
 
   <!-- Local magnetic field -->
   <!-- calculated for edmonton from noaa site for july 2012 -->
@@ -287,24 +303,40 @@
     <define name="DELAY_WITHOUT_GPS" value="3" unit="s"/>
   </section>
 
+  <section name="AGGRESSIVE" prefix="AGR_">
+    <define name="BLEND_START" value="50"/><!-- Altitude Error to Initiate Aggressive Climb CANNOT BE ZERO!!-->
+    <define name="BLEND_END" value="25"/><!-- Altitude Error to Blend Aggressive to Regular Climb Modes  CANNOT BE ZERO!!-->
+    <define name="CLIMB_THROTTLE" value="0.9"/><!-- Gaz for Aggressive Climb -->
+    <define name="CLIMB_PITCH" value="0.35"/><!-- Pitch for Aggressive Climb -->
+    <define name="DESCENT_THROTTLE" value="0.05"/><!-- Gaz for Aggressive Decent -->
+    <define name="DESCENT_PITCH" value="-0.35"/><!-- Pitch for Aggressive Decent -->
+    <define name="CLIMB_NAV_RATIO" value="0.8"/><!-- Percent Navigation for Altitude Error Equal to Start Altitude -->
+    <define name="DESCENT_NAV_RATIO" value="1.0"/>
+  </section>
 
-  <!-- <section name="DIGITAL_CAMERA" prefix="DC_">
+  <section name="SIMU">
+    <define name="YAW_RESPONSE_FACTOR" value="0.7"/> <!-- a to low of a value gives bad simulation results -->
+    <!-- <define name="WEIGHT" value="1."/>
+    <define name="ROLL_RESPONSE_FACTOR" value="1."/> -->
+  </section>
+
+  <section name="DIGITAL_CAMERA" prefix="DC_">
     <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="4" unit="quarter_second"/>
     <define name="AUTOSHOOT_METER_GRID" value="25" unit="meter"/>
-    <define name="DC_IMAGE_BUFFER" value="999"/>
-  </section> -->
+    <define name="DC_IMAGE_BUFFER" value="9999"/>
+  </section>
 
   <section name="Photogrammetry" prefix="PHOTOGRAMMETRY_">
     <!-- Camera Parameters -->
-    <!-- <define name="FOCAL_LENGTH" value="35" unit="mm"/> -->
-    <!-- <define name="SENSOR_WIDTH" value="24" unit="mm"/> -->    <!-- In direction of the plane's wings -->
-    <!-- <define name="SENSOR_HEIGHT" value="13.5" unit="mm"/> --> <!-- In direction of the plane's nose -->
-    <!-- <define name="PIXELS_WIDTH" value="1024" unit=""/> -->
+    <define name="FOCAL_LENGTH" value="35" unit="mm"/>
+    <define name="SENSOR_WIDTH" value="24" unit="mm"/>    <!-- In direction of the plane's wings -->
+    <define name="SENSOR_HEIGHT" value="13.5" unit="mm"/> <!-- In direction of the plane's nose -->
+    <define name="PIXELS_WIDTH" value="1024" unit=""/>
 
     <!-- Flight Safety Parameters -->
-    <!-- <define name="HEIGHT_MIN" value="35" unit="m"/>
+    <define name="HEIGHT_MIN" value="35" unit="m"/>
     <define name="HEIGHT_MAX" value="500" unit="m"/>
-    <define name="RADIUS_MIN" value="70" unit="m"/> -->
+    <define name="RADIUS_MIN" value="70" unit="m"/>
   </section>
 
 </airframe>

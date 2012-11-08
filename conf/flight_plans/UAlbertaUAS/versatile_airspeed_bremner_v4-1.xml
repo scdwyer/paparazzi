@@ -254,16 +254,6 @@
       <set value="DC_AUTOSHOOT_STOP" var="dc_autoshoot"/>
       <deroute block="Standby"/>
     </block>
-    <block name="Start Photos Standby" strip_button="Cancel Survey" strip_icon="survey.png">
-      <set value="DC_AUTOSHOOT_PERIODIC" var="dc_autoshoot"/>
-      <deroute block="Standby"/>
-    </block>
-    <block name="Start Photos" strip_button="Start Photos" strip_icon="survey.png">
-      <set value="DC_AUTOSHOOT_PERIODIC" var="dc_autoshoot"/>
-    </block>
-    <block name="Stop Photos" strip_button="Stop Photos" strip_icon="survey.png">
-      <set value="DC_AUTOSHOOT_STOP" var="dc_autoshoot"/>
-    </block>
 
   </blocks>
 </flight_plan>

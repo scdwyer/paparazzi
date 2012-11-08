@@ -49,6 +49,8 @@
       <subsystem name="radio_control" type="ppm"/> <!-- for sim target because it doesn't support spektrum -->
     </target>
 
+    <define name="USE_LED_12"/> <!-- try explicitly enabling the use of LED_12 on PC12 gpio on lisa/m v2 for spectrometer -->
+
     <define name="USE_AIRSPEED"/> <!-- enable use of an airspeed sensor -->
     <define name="USE_I2C2"/> <!-- port for airspeed sensor -->
     <define name="AGR_CLIMB"/>
@@ -113,7 +115,7 @@
 -->
 
     <load name="digital_cam.xml">
-      <define name="DC_SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector -->
+      <define name="DC_SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
       <define name="DC_SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
     </load>
 

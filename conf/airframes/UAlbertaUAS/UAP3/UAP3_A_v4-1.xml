@@ -325,7 +325,7 @@
   <section name="DIGITAL_CAMERA" prefix="DC_">
     <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="4" unit="quarter_second"/>
     <define name="AUTOSHOOT_METER_GRID" value="25" unit="meter"/>
-    <define name="DC_IMAGE_BUFFER" value="9999"/>
+    <define name="IMAGE_BUFFER" value="9999"/>
   </section>
 
   <section name="Photogrammetry" prefix="PHOTOGRAMMETRY_">

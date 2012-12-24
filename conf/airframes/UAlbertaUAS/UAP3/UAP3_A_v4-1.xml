@@ -117,6 +117,8 @@
     <load name="digital_cam.xml">
       <define name="DC_SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
       <define name="DC_SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
+      <define name="DC_PUSH" value="LED_OFF" /> <!-- actually LED_OFF is High on Lisa/M v2 -->
+      <define name="DC_RELEASE" value="LED_ON" />
     </load>
 
     <load name="photogrammetry_calculator.xml"/>
@@ -128,10 +130,10 @@
 
   <servos>
     <servo name="THROTTLE" no="0" min="1000" neutral="1000" max="2000"/>
-    <servo name="AILEVON_LEFT" no="1" min="1200" neutral="1500" max="1800"/>
-    <servo name="ELEVATOR" no="2" min="2000" neutral="1500" max="1000"/>
+    <servo name="AILEVON_LEFT" no="1" min="1252" neutral="1552" max="1852"/> <!-- trimmed centered at 1552 -->
+    <servo name="ELEVATOR" no="2" min="1950" neutral="1450" max="950"/> <!-- trimmed centered at 1410 -->
     <servo name="RUDDER" no="3" min="1100" neutral="1500" max="1900"/>
-    <servo name="AILEVON_RIGHT" no="4" min="1800" neutral="1500" max="1200"/>
+    <servo name="AILEVON_RIGHT" no="4" min="1852" neutral="1552" max="1252"/>
   </servos>
 
   <commands>
@@ -148,21 +150,22 @@
     <set command="YAW" value="@YAW"/>
   </rc_commands>
 
+  <!-- ADD SOME RUDDER MIXING!!!! -->
+  <section name="MIXER">
+    <define name="MIX_YAW_OF_ROLL" value="0.3f"/>
+  </section>
+
   <command_laws>
-    <!-- <let var="enable_mix" value="((fbw_mode > 0) ? 1 : 0)"/>
-    <let var="yaw_mixed" value="((float(@ROLL)) * YAW_OF_ROLL_MIX * (float($enable_mix)))"/> -->
+    <let var="enable_mix" value="((fbw_mode > FBW_MODE_MANUAL) ? 1 : 0)"/>
+    <!-- <let var="enable_mix" value="1"/> -->
+    <let var="yaw_mixed" value="(int16_t)((@ROLL) * MIX_YAW_OF_ROLL * (float)($enable_mix))"/>
     <set servo="AILEVON_LEFT" value="@ROLL"/>
     <set servo="AILEVON_RIGHT" value="-@ROLL"/>
     <set servo="THROTTLE" value="@THROTTLE"/>
     <set servo="ELEVATOR" value="@PITCH"/>
-    <set servo="RUDDER" value="@YAW"/>
-    <!-- <set servo="RUDDER" value="@YAW + $yaw_mixed"/> -->
+    <!-- <set servo="RUDDER" value="@YAW + @ROLL"/> -->
+    <set servo="RUDDER" value="@YAW + $yaw_mixed"/>
   </command_laws>
-
-  <!-- ADD SOME RUDDER MIXING!!!! -->
-  <section name="MIXER">
-    <define name="YAW_OF_ROLL_MIX" value="0.3f"/>
-  </section>
 
   <!-- <auto_rc_commands> -->
     <!-- No rc yaw in auto modes -->
@@ -208,8 +211,8 @@
 
 
   <section name="AUTO1" prefix="AUTO1_">
-    <define name="MAX_ROLL" value="0.8"/>
-    <define name="MAX_PITCH" value="0.8"/>
+    <define name="MAX_ROLL" value="1.0"/>
+    <define name="MAX_PITCH" value="1.0"/>
   </section>
 
   <section name="BAT">
@@ -265,11 +268,24 @@
     <define name="ALTITUDE_MAX_CLIMB" value="3."/>
 
     <!-- auto throttle inner loop -->
-    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.6"/>
+    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.73"/>
     <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.35"/>
     <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.7"/>
+
     <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.518000006676" unit="%/(m/s)"/>
     <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.307000011206"/>
+
+    <!--
+    <define name="AIRSPEED_PGAIN" value="0.0"/>
+
+    <define name="AUTO_THROTTLE_OF_AIRSPEED_PGAIN" value="0.0"/>
+    <define name="AUTO_THROTTLE_OF_AIRSPEED_IGAIN" value="0.0"/>
+
+    <define name="ENERGY_TOT_PGAIN" value="0.0"/>
+    <define name="ENERGY_TOT_IGAIN" value="0.0"/>
+    <define name="ENERGY_DIFF_PGAIN" value="0.0"/>
+    <define name="ENERGY_DIFF_IGAIN" value="0.0"/>
+    -->
 
     <define name="THROTTLE_SLEW_LIMITER" value="1" unit="s"/>
   </section>
@@ -280,13 +296,13 @@
     <define name="COURSE_PRE_BANK_CORRECTION" value="1.00800001621"/>
 
     <define name="ROLL_MAX_SETPOINT" value="60." unit="deg"/>
-    <define name="PITCH_MAX_SETPOINT" value="35." unit="deg"/>
+    <define name="PITCH_MAX_SETPOINT" value="25." unit="deg"/>
     <define name="PITCH_MIN_SETPOINT" value="-20." unit="deg"/>
 
     <define name="PITCH_PGAIN" value="13000."/>
     <define name="PITCH_DGAIN" value="1.5"/>
 
-    <define name="ELEVATOR_OF_ROLL" value="1273.88500977"/>
+    <define name="ELEVATOR_OF_ROLL" value="1600.0"/>
 
     <define name="ROLL_SLEW" value="1."/>
 

@@ -12,13 +12,14 @@
 
 #ifdef DC_AUTOSHOOT_QUARTERSEC_PERIOD
 #include "modules/digital_cam/dc.h"
+#define DC_SHOOT_ON_RETURN 1
 #define LINE_START_FUNCTION dc_autoshoot = DC_AUTOSHOOT_PERIODIC;
 //#define LINE_START_FUNCTION dc_Survey(dc_gps_dist);
 #define LINE_STOP_FUNCTION dc_autoshoot = DC_AUTOSHOOT_STOP;
 #endif
 
 // For photogrammetry module
-#define PHOTOGRAMMETRY_SWEEP_ANGLE 0   // Degrees from the North
+#define PHOTOGRAMMETRY_SWEEP_ANGLE 0.01   // Degrees from the North, RADIANS, not degrees
 #define PHOTOGRAMMETRY_OVERLAP 50   // 1-99 Procent
 #define PHOTOGRAMMETRY_SIDELAP 50   // 1-99 Procent
 #define PHOTOGRAMMETRY_RESOLUTION 80    // mm pixel projection size
@@ -64,7 +65,7 @@
   </sectors>
   <exceptions>
     <exception cond="And((datalink_time > 25),launch)" deroute="Standby"/>
-    <exception cond="And((estimator_z > ground_alt + 240),launch)" deroute="Standby"/>
+    <exception cond="And((estimator_z > ground_alt + 230),launch)" deroute="Standby"/>
     <!-- add exception to return to home if r/c lost for > 2s?  -->
   </exceptions>
   <blocks>
@@ -88,7 +89,7 @@
       <go wp="CLIMB"/>
     </block>
     <block group="basic" name="Standby" strip_button="Standby" strip_icon="home.png">
-      <!-- <set value="NOMINAL_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" /> -->
+      <set value="NOMINAL_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" />
       <circle radius="nav_radius" wp="STDBY"/>
     </block>
     <block group="basic" name="Figure 8 around wp 1" strip_button="Figure 8 (wp 1-2)" strip_icon="eight.png">
@@ -96,7 +97,13 @@
     </block>
     <block group="basic" name="Oval 1-2" strip_button="Oval (wp 1-2)" strip_icon="oval.png">
       <!-- <set value="RACE_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" /> -->
+      <set value="NOMINAL_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" />
       <oval p1="1" p2="2" radius="nav_radius"/>
+    </block>
+    <block group="basic" name="Oval S1-S2" strip_button="Oval (wp S1-S2)" strip_icon="oval.png">
+      <!-- <set value="RACE_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" /> -->
+      <set value="NOMINAL_AIRSPEED" var="v_ctl_auto_airspeed_setpoint" />
+      <oval p1="S1" p2="S2" radius="-nav_radius"/>
     </block>
     <block group="basic" name="MOB" strip_button="Turn around here" strip_icon="mob.png">
       <call fun="NavSetWaypointHere(WP_MOB)"/>
@@ -323,6 +330,7 @@
     <block group="survey" name="Init Photo ADV Poly Survey 5678" strip_button="photo survey ADV 5678" strip_icon="survey.png">
       <call fun="PhotogrammetryCalculatorPolygonSurveyADV(WP_5, 4)"/>
       <call fun="poly_survey_adv()"/>
+      <deroute block="Standby"/>
     </block>
     <block group="survey" name="Init Photo Poly Survey 5678" strip_button="photo survey 5678" strip_icon="survey.png">
       <call fun="PhotogrammetryCalculatorPolygonSurvey(WP_5, 4)"/>
@@ -331,6 +339,7 @@
     <block group="survey" name="Init Raw ADV Poly Survey 5678" strip_button="raw survey ADV 5678" strip_icon="survey.png">
       <call fun="init_poly_survey_adv(WP_5, 4, 0., 100., 25., 70., 660.)"/>
       <call fun="poly_survey_adv()"/>
+      <deroute block="Standby"/>
     </block>
     <block group="survey" name="Init Raw OSAM Poly Survey 5678" strip_button="osam survey 5678" strip_icon="survey.png">
       <call fun="InitializePolygonSurvey(WP_5, 4, 100., nav_course)"/>
@@ -345,6 +354,11 @@
     <block name="Cancel Survey" strip_button="Cancel Survey" strip_icon="survey.png">
       <set value="DC_AUTOSHOOT_STOP" var="dc_autoshoot"/>
       <deroute block="Standby"/>
+    </block>
+
+    <block group="lines" name="Vertical Raster S1-S2" strip_button="vert raster S1-S2" strip_icon="line.png">
+      <call fun="InitializeVerticalRaster()"/>
+      <call fun="VerticalRaster(WP_S1, WP_S2, nav_radius, 20.0)"/>
     </block>
 
   </blocks>

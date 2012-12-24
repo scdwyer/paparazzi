@@ -651,6 +651,9 @@ void nav_oval(uint8_t p1, uint8_t p2, float radius) {
   switch (oval_status) {
   case OC1 :
     nav_circle_XY(p1_center.x,p1_center.y, -radius);
+    if (nav_approaching_xy(waypoints[p1].x, waypoints[p1].y, waypoints[p2].x, waypoints[p2].y, 1.0)) {
+      LINE_STOP_FUNCTION;
+    }
     if (NavQdrCloseTo(DegOfRad(qdr_out_1)-qdr_anticipation)) {
       oval_status = OR12;
       InitStage();
@@ -664,12 +667,15 @@ void nav_oval(uint8_t p1, uint8_t p2, float radius) {
       oval_status = OC2;
       nav_oval_count++;
       InitStage();
-      LINE_STOP_FUNCTION;
+      //LINE_STOP_FUNCTION;
     }
     return;
 
   case OC2 :
     nav_circle_XY(p2_center.x, p2_center.y, -radius);
+    if (nav_approaching_xy(p2_in.x, p2_in.y, p1_out.x, p1_out.y, 1.0)) {
+      LINE_STOP_FUNCTION;
+    }
     if (NavQdrCloseTo(DegOfRad(qdr_out_2)-qdr_anticipation)) {
       oval_status = OR21;
       InitStage();
@@ -682,7 +688,7 @@ void nav_oval(uint8_t p1, uint8_t p2, float radius) {
     if (nav_approaching_xy(waypoints[p1].x, waypoints[p1].y, waypoints[p2].x, waypoints[p2].y, CARROT)) {
       oval_status = OC1;
       InitStage();
-      LINE_STOP_FUNCTION;
+      //LINE_STOP_FUNCTION;
     }
     return;
 

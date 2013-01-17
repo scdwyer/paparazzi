@@ -710,10 +710,6 @@ bool_t spi_resume(struct spi_periph* p, uint8_t slave) {
 /// receive transferred over DMA
 void dma1_channel2_isr(void)
 {
-  struct spi_periph_dma *dma = spi1.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA1_ISR & DMA_ISR_TCIF2) != 0) {
     // clear int pending bit
     DMA1_IFCR |= DMA_IFCR_CTCIF2;
@@ -728,10 +724,6 @@ void dma1_channel2_isr(void)
 /// transmit transferred over DMA
 void dma1_channel3_isr(void)
 {
-  struct spi_periph_dma *dma = spi1.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA1_ISR & DMA_ISR_TCIF3) != 0) {
     // clear int pending bit
     DMA1_IFCR |= DMA_IFCR_CTCIF3;
@@ -749,10 +741,6 @@ void dma1_channel3_isr(void)
 /// receive transferred over DMA
 void dma1_channel4_isr(void)
 {
-  struct spi_periph_dma *dma = spi2.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA1_ISR & DMA_ISR_TCIF4) != 0) {
     // clear int pending bit
     DMA1_IFCR |= DMA_IFCR_CTCIF4;
@@ -767,10 +755,6 @@ void dma1_channel4_isr(void)
 /// transmit transferred over DMA
 void dma1_channel5_isr(void)
 {
-  struct spi_periph_dma *dma = spi2.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA1_ISR & DMA_ISR_TCIF5) != 0) {
     // clear int pending bit
     DMA1_IFCR |= DMA_IFCR_CTCIF5;
@@ -788,10 +772,6 @@ void dma1_channel5_isr(void)
 /// receive transferred over DMA
 void dma2_channel1_isr(void)
 {
-  struct spi_periph_dma *dma = spi0.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA2_ISR & DMA_ISR_TCIF1) != 0) {
     // clear int pending bit
     DMA2_IFCR |= DMA_IFCR_CTCIF1;
@@ -806,10 +786,6 @@ void dma2_channel1_isr(void)
 /// transmit transferred over DMA
 void dma2_channel2_isr(void)
 {
-  struct spi_periph_dma *dma = spi0.init_struct;
-  // if this is the last part of the transaction, set finished flag
-  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
-
   if ((DMA2_ISR & DMA_ISR_TCIF2) != 0) {
     // clear int pending bit
     DMA2_IFCR |= DMA_IFCR_CTCIF2;
@@ -860,6 +836,9 @@ void process_rx_dma_interrupt( struct spi_periph *spi ) {
       spi->status = SPIIdle;
     else
       spi_rw(spi, spi->trans[spi->trans_extract_idx]);
+  } else {
+    // if this is not the last part of the transaction, set finished flag
+    dma->other_dma_finished = 1;
   }
 }
 
@@ -900,6 +879,9 @@ void process_tx_dma_interrupt( struct spi_periph *spi ) {
       spi->status = SPIIdle;
     else
       spi_rw(spi, spi->trans[spi->trans_extract_idx]);
+  } else {
+    // if this is not the last part of the transaction, set finished flag
+    dma->other_dma_finished = 1;
   }
 }
 

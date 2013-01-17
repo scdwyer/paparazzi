@@ -40,13 +40,24 @@
  * This does require modifications in the makefiles, because the correct arch_init needs to be called
  * for the selection of aspirin v2.1 for example.
  *
+ * When a transaction is submitted:
+ * - The transaction is added to the queue if there is space, otherwise it returns false
+ * - The pending state is set
+ * - SPI Interrupts (in this case the dma interrupts) are disabled to prevent race conditions
+ * - The slave is selected if required, AFTER which the before_cb callback is run
+ * - The spi and dma registers are set up appropriately for the specific transaction
+ * - Interrupts, spi and dma are enabled, and the transaction starts
+ *
  * For the dma and interrupts:
  * - For each transaction, an interrupt is called after the dma transfer is complete for the rx AND the tx (i.e. two)
  * - Each interrupt does some basic cleanup necessary to finish off each dma transfer
- * - Callbacks, status changes and further transactions only occur after both dma transfers are complete, using a state flag
+ * - The after_cb callback, slave unselect, status changes and further transactions only occur after both dma
+ *   transfers are complete, using a state flag. Note that the callback happens BEFORE the slave unselect
  * - If the receive input_length is 0, the dma transfer is not even initialized, and no interrupt will occur
  * - The state flag handles this as a case where the rx dma transfer is already complete
- * - It is assumed that the transmit output_length will never be 0.
+ *
+ * It is assumed that the transmit output_length and receive input_length will never be 0 at the same time.
+ * In this case, spi_submit will just return false.
  */
 
 #include <libopencm3/stm32/f1/nvic.h>
@@ -202,8 +213,11 @@ static void spi_arch_int_enable( struct spi_periph *spi ) {
     nvic_set_priority( ((struct spi_periph_dma *)spi->init_struct)->rx_nvic_irq, 0);
     nvic_enable_irq( ((struct spi_periph_dma *)spi->init_struct)->rx_nvic_irq );
   }
-  nvic_set_priority( ((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq, 0);
-  nvic_enable_irq( ((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq );
+  if ( spi->trans[spi->trans_extract_idx]->output_length != 0 ) {
+    // only enable the transmit interrupt if we want to transmit something
+    nvic_set_priority( ((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq, 0);
+    nvic_enable_irq( ((struct spi_periph_dma *)spi->init_struct)->tx_nvic_irq );
+  }
 }
 
 /// Disable DMA rx channel interrupt
@@ -435,8 +449,14 @@ static void spi_rw(struct spi_periph* p, struct spi_transaction  * _trans)
   _trans->status = SPITransRunning;
   p->status = SPIRunning;
 
+  // Select the slave if required
   if ( _trans->select == SPISelectUnselect || _trans->select == SPISelect ) {
     SpiSlaveSelect( _trans->slave_idx );
+  }
+
+  // Run the callback AFTER selecting the slave
+  if (_trans->before_cb != 0) {
+      _trans->before_cb( _trans );
   }
 
   dma = p->init_struct;
@@ -505,9 +525,18 @@ static void spi_rw(struct spi_periph* p, struct spi_transaction  * _trans)
     spi_arch_int_enable( p );
   }
 
+  /*
+   * Clear flag for interrupt order handling
+   *
+   * Note: If one of the transaction lengths is 0, it won't trigger an interrupt.
+   * This is like the interrupt has already finished, so you specify that the other
+   * dma has already finished, and everything is cleaned up after the one interrupt
+   * that actually runs. The case that both lengths are zero is guarded against in
+   * spi_submit.
+   */
+  dma->other_dma_finished = 0;
+
   if ( _trans->input_length > 0 ) {
-    // Clear flags for interrupt order handling
-    dma->other_dma_finished = 0;
     // Rx_DMA_Channel configuration ------------------------------------
     dma_channel_reset( dma->dma, dma->rx_chan );
     dma_set_peripheral_address(dma->dma, dma->rx_chan, (u32)dma->spidr);
@@ -521,22 +550,27 @@ static void spi_rw(struct spi_periph* p, struct spi_transaction  * _trans)
     //dma_set_mode(dma->dma, dma->rx_chan, DMA_???_NORMAL);
     dma_set_priority(dma->dma, dma->rx_chan, DMA_CCR_PL_VERY_HIGH);
   } else {
-    // There is no interrupt in this case, i.e. like the interrupt already finished
+    // There will be no interrupt in this case, i.e. like the interrupt already finished
     dma->other_dma_finished = 1;
   }
 
-  // SPI Tx_DMA_Channel configuration ------------------------------------
-  dma_channel_reset(dma->dma, dma->tx_chan);
-  dma_set_peripheral_address(dma->dma, dma->tx_chan, (u32)dma->spidr);
-  dma_set_memory_address(dma->dma, dma->tx_chan, (uint32_t)_trans->output_buf);
-  dma_set_number_of_data(dma->dma, dma->tx_chan, _trans->output_length);
-  dma_set_read_from_memory(dma->dma, dma->tx_chan);
-  //dma_disable_peripheral_increment_mode(dma->dma, dma->tx_chan);
-  dma_enable_memory_increment_mode(dma->dma, dma->tx_chan);
-  dma_set_peripheral_size(dma->dma, dma->tx_chan, DMA_CCR_PSIZE_8BIT);
-  dma_set_memory_size(dma->dma, dma->tx_chan, DMA_CCR_MSIZE_8BIT);
-  //dma_set_mode(dma->dma, dma->tx_chan, DMA_???_NORMAL);
-  dma_set_priority(dma->dma, dma->tx_chan, DMA_CCR_PL_MEDIUM);
+  if ( _trans->output_length > 0 ) {
+    // SPI Tx_DMA_Channel configuration ------------------------------------
+    dma_channel_reset(dma->dma, dma->tx_chan);
+    dma_set_peripheral_address(dma->dma, dma->tx_chan, (u32)dma->spidr);
+    dma_set_memory_address(dma->dma, dma->tx_chan, (uint32_t)_trans->output_buf);
+    dma_set_number_of_data(dma->dma, dma->tx_chan, _trans->output_length);
+    dma_set_read_from_memory(dma->dma, dma->tx_chan);
+    //dma_disable_peripheral_increment_mode(dma->dma, dma->tx_chan);
+    dma_enable_memory_increment_mode(dma->dma, dma->tx_chan);
+    dma_set_peripheral_size(dma->dma, dma->tx_chan, DMA_CCR_PSIZE_8BIT);
+    dma_set_memory_size(dma->dma, dma->tx_chan, DMA_CCR_MSIZE_8BIT);
+    //dma_set_mode(dma->dma, dma->tx_chan, DMA_???_NORMAL);
+    dma_set_priority(dma->dma, dma->tx_chan, DMA_CCR_PL_MEDIUM);
+  } else {
+    // There will be no interrupt in this case, i.e. like the interrupt already finished
+    dma->other_dma_finished = 1;
+  }
 
   if ( _trans->input_length > 0 ) {
     // Enable SPI Rx request
@@ -545,18 +579,22 @@ static void spi_rw(struct spi_periph* p, struct spi_transaction  * _trans)
     dma_enable_channel(dma->dma, dma->rx_chan);
   }
 
-  // Enable SPI Tx request
-  spi_enable_tx_dma(dma->spi);
-  // Enable dma->dma tx Channel
-  dma_enable_channel(dma->dma, dma->tx_chan);
+  if ( _trans->output_length > 0 ) {
+    // Enable SPI Tx request
+    spi_enable_tx_dma(dma->spi);
+    // Enable dma->dma tx Channel
+    dma_enable_channel(dma->dma, dma->tx_chan);
+  }
 
   // FIXME do we need to explicitly disable the half transfer interrupt?
   if ( _trans->input_length > 0 ) {
     // Enable dma->dma rx Channel Transfer Complete interrupt
     dma_enable_transfer_complete_interrupt(dma->dma, dma->rx_chan);
   }
-  // Enable dma->dma tx Channel Transfer Complete interrupt
-  dma_enable_transfer_complete_interrupt(dma->dma, dma->tx_chan);
+  if ( _trans->output_length > 0 ) {
+    // Enable dma->dma tx Channel Transfer Complete interrupt
+    dma_enable_transfer_complete_interrupt(dma->dma, dma->tx_chan);
+  }
 }
 
 bool_t spi_submit(struct spi_periph* p, struct spi_transaction* t)
@@ -564,10 +602,12 @@ bool_t spi_submit(struct spi_periph* p, struct spi_transaction* t)
   uint8_t idx;
   idx = p->trans_insert_idx + 1;
   if (idx >= SPI_TRANSACTION_QUEUE_LEN) idx = 0;
-  if (idx == p->trans_extract_idx) {
+  if ((idx == p->trans_extract_idx) || ((t->input_length == 0) && (t->output_length == 0))) {
     t->status = SPITransFailed;
-    return FALSE; /* queue full */
+    return FALSE; /* queue full or input_length and output_length both 0 */
+    // TODO can't tell why it failed here if it does
   }
+
   t->status = SPITransPending;
 
   //Disable interrupts to avoid race conflict with end of DMA transfer interrupt
@@ -671,15 +711,8 @@ bool_t spi_resume(struct spi_periph* p, uint8_t slave) {
 void dma1_channel2_isr(void)
 {
   struct spi_periph_dma *dma = spi1.init_struct;
-  struct spi_transaction *trans = spi1.trans[spi1.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA1_ISR & DMA_ISR_TCIF2) != 0) {
     // clear int pending bit
@@ -696,15 +729,8 @@ void dma1_channel2_isr(void)
 void dma1_channel3_isr(void)
 {
   struct spi_periph_dma *dma = spi1.init_struct;
-  struct spi_transaction *trans = spi1.trans[spi1.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA1_ISR & DMA_ISR_TCIF3) != 0) {
     // clear int pending bit
@@ -724,15 +750,8 @@ void dma1_channel3_isr(void)
 void dma1_channel4_isr(void)
 {
   struct spi_periph_dma *dma = spi2.init_struct;
-  struct spi_transaction *trans = spi2.trans[spi2.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA1_ISR & DMA_ISR_TCIF4) != 0) {
     // clear int pending bit
@@ -749,15 +768,8 @@ void dma1_channel4_isr(void)
 void dma1_channel5_isr(void)
 {
   struct spi_periph_dma *dma = spi2.init_struct;
-  struct spi_transaction *trans = spi2.trans[spi2.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA1_ISR & DMA_ISR_TCIF5) != 0) {
     // clear int pending bit
@@ -777,15 +789,8 @@ void dma1_channel5_isr(void)
 void dma2_channel1_isr(void)
 {
   struct spi_periph_dma *dma = spi0.init_struct;
-  struct spi_transaction *trans = spi0.trans[spi0.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA2_ISR & DMA_ISR_TCIF1) != 0) {
     // clear int pending bit
@@ -802,15 +807,8 @@ void dma2_channel1_isr(void)
 void dma2_channel2_isr(void)
 {
   struct spi_periph_dma *dma = spi0.init_struct;
-  struct spi_transaction *trans = spi0.trans[spi0.trans_extract_idx];
-  // if this is the last part of the transaction, unselect the slave, otherwise set finished flag
-  if ( dma->other_dma_finished != 0 ) {
-    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
-      SpiSlaveUnselect( trans->slave_idx );
-    }
-  } else {
-    dma->other_dma_finished = 1;
-  }
+  // if this is the last part of the transaction, set finished flag
+  if ( dma->other_dma_finished == 0 ) dma->other_dma_finished = 1;
 
   if ((DMA2_ISR & DMA_ISR_TCIF2) != 0) {
     // clear int pending bit
@@ -841,10 +839,18 @@ void process_rx_dma_interrupt( struct spi_periph *spi ) {
 
   if ( dma->other_dma_finished != 0 ) {
     // this transaction is finished
+    // run the callback
     trans->status = SPITransSuccess;
     if (trans->after_cb != 0) {
       trans->after_cb( trans );
     }
+
+    // AFTER the callback, then unselect the slave if required
+    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
+      SpiSlaveUnselect( trans->slave_idx );
+    }
+
+    // increment the transaction to handle
     spi->trans_extract_idx++;
 
     // Check if there is another pending SPI transaction
@@ -873,10 +879,18 @@ void process_tx_dma_interrupt( struct spi_periph *spi ) {
 
   if ( dma->other_dma_finished != 0 ) {
     // this transaction is finished
+    // run the callback
     trans->status = SPITransSuccess;
     if (trans->after_cb != 0) {
       trans->after_cb( trans );
     }
+
+    // AFTER the callback, then unselect the slave if required
+    if ( trans->select == SPISelectUnselect || trans->select == SPIUnselect ) {
+      SpiSlaveUnselect( trans->slave_idx );
+    }
+
+    // increment the transaction to handle
     spi->trans_extract_idx++;
 
     // Check if there is another pending SPI transaction

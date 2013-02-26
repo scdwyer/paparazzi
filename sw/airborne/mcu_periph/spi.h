@@ -139,8 +139,8 @@ typedef void (*SPICallback)( struct spi_transaction *trans );
 struct spi_transaction {
   volatile uint8_t* input_buf;
   volatile uint8_t* output_buf;
-  uint8_t input_length;         ///< number of bytes to read
-  uint8_t output_length;        ///< number of bytes to write
+  uint8_t input_length;         ///< number of data words to read
+  uint8_t output_length;        ///< number of data words to write
   uint8_t slave_idx;            ///< slave id
   enum SPISlaveSelect select;   ///< slave selection behavior
   enum SPIClockPolarity cpol;   ///< clock polarity control

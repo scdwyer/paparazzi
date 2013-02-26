@@ -46,8 +46,8 @@
  * It is assumed that the transmit output_length and receive input_length will never be 0 at the same time.
  * In this case, spi_submit will just return false.
  *
- * IMPORTANT: At this point, you MUST MAKE THE TRANSACTION TRANSMIT BUFFER AT LEAST AS LONG AS THE RECEIVE BUFFER, or the
- * transmit buffer memory will overrun to the length of the receive buffer with zeroes.
+ * The case where tx length is less than rx length, a second dummy transmit dma transfer is started after the
+ * first transmit dma interrupt completes, handled in the ISR directly.
  */
 
 #include <libopencm3/stm32/f1/nvic.h>

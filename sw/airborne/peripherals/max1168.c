@@ -49,6 +49,7 @@ extern void max1168_init( void ) {
   max1168_req_trans.slave_idx = MAX1168_SLAVE_IDX;
   max1168_req_trans.cpol = SPICpolIdleLow;
   max1168_req_trans.cpha = SPICphaEdge1;
+  max1168_req_trans.cdiv = SPIDiv32;
   max1168_req_trans.dss = SPIDss16bit;
   max1168_req_trans.select = SPISelect;
   max1168_conv_req = MAX1168_CONF_CR << 8;
@@ -62,6 +63,7 @@ extern void max1168_init( void ) {
   max1168_read_trans.slave_idx = MAX1168_SLAVE_IDX;
   max1168_read_trans.cpol = SPICpolIdleLow;
   max1168_read_trans.cpha = SPICphaEdge1;
+  max1168_read_trans.cdiv = SPIDiv32;
   max1168_read_trans.dss = SPIDss16bit;
   max1168_read_trans.select = SPIUnselect;
   // read 8 16bit frames

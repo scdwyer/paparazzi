@@ -965,6 +965,8 @@ void process_rx_dma_interrupt(struct spi_periph *periph) {
   dma_disable_channel(dma->dma, dma->rx_chan);
 
   if (dma->other_dma_finished != 0) {
+    while (SPI_SR((u32)periph->reg_addr) & SPI_SR_BSY)
+      ;
     // this transaction is finished
     // run the callback
     trans->status = SPITransSuccess;
@@ -1008,6 +1010,8 @@ void process_tx_dma_interrupt(struct spi_periph *periph) {
   dma_disable_channel(dma->dma, dma->tx_chan);
 
   if (dma->other_dma_finished != 0) {
+    while (SPI_SR((u32)periph->reg_addr) & SPI_SR_BSY)
+      ;
     // this transaction is finished
     // run the callback
     trans->status = SPITransSuccess;

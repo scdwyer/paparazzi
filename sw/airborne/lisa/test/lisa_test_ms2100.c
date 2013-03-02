@@ -48,7 +48,7 @@ int main(void) {
 
 static inline void main_init( void ) {
   mcu_init();
-  sys_time_register_timer((1./PERIODIC_FREQUENCY), NULL);
+  sys_time_register_timer((1./50), NULL);
 
   ms2100_init(&ms2100, &(MS2100_SPI_DEV), MS2100_SLAVE_IDX);
 
@@ -59,8 +59,8 @@ static inline void main_periodic_task( void ) {
   RunOnceEvery(10,
                {
                  DOWNLINK_SEND_BOOT(DefaultChannel, DefaultDevice, &sys_time.nb_sec);
+                 LED_TOGGLE(2);
                  LED_PERIODIC();
-                 LED_TOGGLE(2)
                });
 
   ms2100_periodic(&ms2100);

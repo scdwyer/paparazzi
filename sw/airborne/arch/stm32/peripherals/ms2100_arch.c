@@ -26,6 +26,7 @@
  */
 
 #include "peripherals/ms2100.h"
+#include "mcu_periph/sys_time.h"
 
 #include <libopencm3/stm32/f1/rcc.h>
 #include <libopencm3/stm32/exti.h>
@@ -33,9 +34,13 @@
 void ms2100_arch_init( void ) {
 
   /* set mag reset as output (reset on PC13) ----*/
+  rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPCEN | RCC_APB2ENR_AFIOEN);
+  gpio_set(GPIOC, GPIO13);
+  gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO13);
   Ms2100Reset();
 
-  /* configure data ready on PB5 */
+  /* configure data ready input on PB5 */
+  rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN);
   gpio_set_mode(GPIOB, GPIO_MODE_INPUT,
 	        GPIO_CNF_INPUT_FLOAT, GPIO5);
 
@@ -45,8 +50,15 @@ void ms2100_arch_init( void ) {
 void ms2100_reset_cb( struct spi_transaction * t __attribute__ ((unused)) ) {
   // set RESET pin high for at least 100 nsec
   // busy wait should not harm
-  // storing start and dt is probably long enough...
   Ms2100Set();
-  // TODO wait loop so the reset toggle is long enough
+
+  // FIXME, make nanosleep funcion
+  uint32_t dt_ticks = cpu_ticks_of_nsec(110);
+  int32_t end_cpu_ticks = systick_get_value() - dt_ticks;
+  if (end_cpu_ticks < 0)
+    end_cpu_ticks += systick_get_reload();
+  while (systick_get_value() > end_cpu_ticks)
+    ;
+
   Ms2100Reset();
 }

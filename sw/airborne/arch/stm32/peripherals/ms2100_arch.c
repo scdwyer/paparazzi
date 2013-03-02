@@ -29,6 +29,8 @@
 #include "mcu_periph/sys_time.h"
 
 #include <libopencm3/stm32/f1/rcc.h>
+#include <libopencm3/stm32/f1/nvic.h>
+#include <libopencm3/stm32/f1/gpio.h>
 #include <libopencm3/stm32/exti.h>
 
 void ms2100_arch_init( void ) {
@@ -41,10 +43,15 @@ void ms2100_arch_init( void ) {
 
   /* configure data ready input on PB5 */
   rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN);
-  gpio_set_mode(GPIOB, GPIO_MODE_INPUT,
-	        GPIO_CNF_INPUT_FLOAT, GPIO5);
+  gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO5);
 
-  // TODO configure IRQ for drdy pin
+  /* external interrupt for drdy pin */
+  exti_select_source(EXTI5, GPIOB);
+  exti_set_trigger(EXTI5, EXTI_TRIGGER_RISING);
+  exti_enable_request(EXTI5);
+
+  nvic_set_priority(NVIC_EXTI9_5_IRQ, 0x0f);
+  nvic_enable_irq(NVIC_EXTI9_5_IRQ);
 }
 
 void ms2100_reset_cb( struct spi_transaction * t __attribute__ ((unused)) ) {
@@ -61,4 +68,9 @@ void ms2100_reset_cb( struct spi_transaction * t __attribute__ ((unused)) ) {
     ;
 
   Ms2100Reset();
+}
+
+void exti9_5_isr(void) {
+  ms2100.status = MS2100_GOT_EOC;
+  exti_reset_request(EXTI5);
 }

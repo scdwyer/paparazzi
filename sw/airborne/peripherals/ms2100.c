@@ -109,24 +109,12 @@ static void ms2100_req_meas(struct Ms2100 *ms, uint8_t axis) {
 /// send request to read next axis
 void ms2100_read(struct Ms2100 *ms) {
   /* schedule read on first axis */
-  ms2100_req_meas(ms, 1);
+  ms2100_req_meas(ms, 0);
 }
 
 #define Int16FromBuf(_buf,_idx) ((int16_t)((_buf[_idx]<<8) | _buf[_idx+1]))
 
 void ms2100_event(struct Ms2100 *ms) {
-  // stupid hack for now: poll pin to check for EOC with stm32
-#ifdef Ms2100HasEOC
-  if (Ms2100HasEOC()) ms->status = MS2100_GOT_EOC;
-#endif
-
-  /* check for end of conversion */
-  if (ms->status == MS2100_GOT_EOC) {
-    // eoc occurs, unlock SPI and submit reading req
-    spi_resume(ms->spi_p, ms->req_trans.slave_idx);
-    ms->status = MS2100_READING_RES;
-  }
-
 
   // handle request transaction
   if (ms->req_trans.status == SPITransSuccess) {
@@ -154,11 +142,16 @@ void ms2100_event(struct Ms2100 *ms) {
         ms->cur_axe = 0;
         ms->status = MS2100_DATA_AVAILABLE;
       }
-      /* not all 3 axes read yet, request next one */
       else {
-        ms2100_req_meas(ms, ms->cur_axe);
+        ms->status = MS2100_IDLE;
       }
       ms->read_trans.status = SPITransDone;
+    }
+  }
+  else if (ms->read_trans.status == SPITransDone) {
+    /* request next axis if not all have been read in this cycle */
+    if (ms->cur_axe == 1 || ms->cur_axe == 2) {
+      ms2100_req_meas(ms, ms->cur_axe);
     }
   }
   else if (ms->read_trans.status == SPITransFailed) {
@@ -166,6 +159,13 @@ void ms2100_event(struct Ms2100 *ms) {
     spi_slave_unselect(ms->req_trans.slave_idx);
     ms->cur_axe = 0;
     ms->read_trans.status = SPITransDone;
+  }
+
+  /* check for end of conversion */
+  if (ms->status == MS2100_GOT_EOC) {
+    // eoc occurs, unlock SPI
+    spi_resume(ms->spi_p, ms->req_trans.slave_idx);
+    ms->status = MS2100_READING_RES;
   }
 }
 

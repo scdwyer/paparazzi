@@ -43,6 +43,12 @@
 // keep stupid global variable for now...
 struct Ms2100 ms2100;
 
+/* callback function to lock the spi fifo
+ * after the first transaction
+ */
+void ms2100_lock_cb(struct spi_transaction * t);
+static void ms2100_req_meas(struct Ms2100 *ms, uint8_t axis);
+
 
 void ms2100_init(struct Ms2100 *ms, struct spi_periph *spi_p, uint8_t slave_idx) {
 
@@ -57,13 +63,14 @@ void ms2100_init(struct Ms2100 *ms, struct spi_periph *spi_p, uint8_t slave_idx)
   ms->req_trans.cdiv = SPIDiv64;
 
   ms->req_trans.slave_idx = slave_idx;
-  ms->req_trans.select = SPISelectUnselect;
+  ms->req_trans.select = SPISelect;
   ms->req_trans.output_buf = ms->req_buf;
   ms->req_trans.output_length = 1;
   ms->req_trans.input_buf = NULL;
   ms->req_trans.input_length = 0;
   // ms2100 has to be reset before each measurement: implemented in ms2100_arch.c
   ms->req_trans.before_cb = ms2100_reset_cb;
+  ms->req_trans.after_cb = ms2100_lock_cb;
   ms->req_trans.status = SPITransDone;
 
   /* configure spi transaction to read the result */
@@ -74,7 +81,7 @@ void ms2100_init(struct Ms2100 *ms, struct spi_periph *spi_p, uint8_t slave_idx)
   ms->read_trans.cdiv = SPIDiv64;
 
   ms->read_trans.slave_idx = slave_idx;
-  ms->read_trans.select = SPISelectUnselect;
+  ms->read_trans.select = SPIUnselect;
   ms->read_trans.output_buf = NULL;
   ms->read_trans.output_length = 0;
   ms->read_trans.input_buf = ms->read_buf;
@@ -91,32 +98,44 @@ void ms2100_init(struct Ms2100 *ms, struct spi_periph *spi_p, uint8_t slave_idx)
   ms->status = MS2100_IDLE;
 }
 
+/// send request to read given axis
+static void ms2100_req_meas(struct Ms2100 *ms, uint8_t axis) {
+  ms->req_buf[0] = axis << 0 | MS2100_DIVISOR << 4;
+  spi_submit(ms->spi_p, &(ms->req_trans));
+  spi_submit(ms->spi_p, &(ms->read_trans));
+  ms->status = MS2100_SENDING_REQ;
+}
+
 /// send request to read next axis
 void ms2100_read(struct Ms2100 *ms) {
-  ms->req_buf[0] = (ms->cur_axe+1) << 0 | MS2100_DIVISOR << 4;
-  spi_submit(ms->spi_p, &(ms->req_trans));
-  ms->status = MS2100_SENDING_REQ;
+  /* schedule read on first axis */
+  ms2100_req_meas(ms, 1);
 }
 
 #define Int16FromBuf(_buf,_idx) ((int16_t)((_buf[_idx]<<8) | _buf[_idx+1]))
 
 void ms2100_event(struct Ms2100 *ms) {
-  // handle request transaction
-  if (ms->req_trans.status == SPITransDone) {
-#ifdef Ms2100HasEOC  // stupid hack for now: poll pin to check for EOC with stm32
-    if (Ms2100HasEOC()) ms->status = MS2100_GOT_EOC;
+  // stupid hack for now: poll pin to check for EOC with stm32
+#ifdef Ms2100HasEOC
+  if (Ms2100HasEOC()) ms->status = MS2100_GOT_EOC;
 #endif
-    if (ms->status == MS2100_GOT_EOC) {
-      // eoc occurs, submit reading req
-      spi_submit(ms->spi_p, &(ms->read_trans));
-      ms->status = MS2100_READING_RES;
-    }
+
+  /* check for end of conversion */
+  if (ms->status == MS2100_GOT_EOC) {
+    // eoc occurs, unlock SPI and submit reading req
+    spi_resume(ms->spi_p, ms->req_trans.slave_idx);
+    ms->status = MS2100_READING_RES;
   }
-  else if (ms->req_trans.status == SPITransSuccess) {
+
+
+  // handle request transaction
+  if (ms->req_trans.status == SPITransSuccess) {
     ms->req_trans.status = SPITransDone;
   }
   else if (ms->req_trans.status == SPITransFailed) {
     ms->status = MS2100_IDLE;
+    spi_slave_unselect(ms->req_trans.slave_idx);
+    spi_resume(ms->spi_p, ms->req_trans.slave_idx);
     ms->cur_axe = 0;
     ms->req_trans.status = SPITransDone;
   }
@@ -135,16 +154,21 @@ void ms2100_event(struct Ms2100 *ms) {
         ms->cur_axe = 0;
         ms->status = MS2100_DATA_AVAILABLE;
       }
+      /* not all 3 axes read yet, request next one */
       else {
-        ms->status = MS2100_IDLE;
+        ms2100_req_meas(ms, ms->cur_axe);
       }
       ms->read_trans.status = SPITransDone;
     }
   }
   else if (ms->read_trans.status == SPITransFailed) {
     ms->status = MS2100_IDLE;
+    spi_slave_unselect(ms->req_trans.slave_idx);
     ms->cur_axe = 0;
     ms->read_trans.status = SPITransDone;
   }
 }
 
+void ms2100_lock_cb(struct spi_transaction * trans) {
+  spi_lock(ms2100.spi_p, trans->slave_idx);
+}

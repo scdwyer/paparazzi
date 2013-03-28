@@ -31,10 +31,18 @@
 #include <libopencm3/stm32/f1/gpio.h>
 #include "mcu_periph/spi.h"
 
+/**
+ * Here Reset indicates the Ms2100 is in reset state, i.e.
+ * the reset line is driven high (i.e. the GPIO is "set")
+ */
 static inline void Ms2100Reset(void) {
   GPIOC_BSRR = GPIO13;
 }
 
+/**
+ * Here Set indicates the Ms2100 is in normal state, i.e.
+ * the reset line is driven low (i.e. the GPIO is "reset")
+ */
 static inline void Ms2100Set(void) {
   GPIOC_BRR = GPIO13;
 }

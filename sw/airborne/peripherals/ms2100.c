@@ -100,7 +100,8 @@ void ms2100_init(struct Ms2100 *ms, struct spi_periph *spi_p, uint8_t slave_idx)
 
 /// send request to read given axis
 static void ms2100_req_meas(struct Ms2100 *ms, uint8_t axis) {
-  ms->req_buf[0] = axis << 0 | MS2100_DIVISOR << 4;
+  /* axis index starts at 1 in ms2100 cmds */
+  ms->req_buf[0] = (axis + 1) | (MS2100_DIVISOR << 4);
   spi_submit(ms->spi_p, &(ms->req_trans));
   spi_submit(ms->spi_p, &(ms->read_trans));
   ms->status = MS2100_SENDING_REQ;

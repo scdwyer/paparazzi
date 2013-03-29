@@ -39,7 +39,7 @@ void ms2100_arch_init( void ) {
   rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPCEN | RCC_APB2ENR_AFIOEN);
   gpio_set(GPIOC, GPIO13);
   gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO13);
-  Ms2100Set();
+  Ms2100Reset();
 
   /* configure data ready input on PB5 */
   rcc_peripheral_enable_clock(&RCC_APB2ENR, RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN);
@@ -57,7 +57,7 @@ void ms2100_arch_init( void ) {
 void ms2100_reset_cb( struct spi_transaction * t __attribute__ ((unused)) ) {
   // set RESET pin high for at least 100 nsec
   // busy wait should not harm
-  Ms2100Reset();
+  Ms2100Set();
 
   // FIXME, make nanosleep funcion
   uint32_t dt_ticks = cpu_ticks_of_nsec(110);
@@ -67,7 +67,7 @@ void ms2100_reset_cb( struct spi_transaction * t __attribute__ ((unused)) ) {
   while (systick_get_value() > end_cpu_ticks)
     ;
 
-  Ms2100Set();
+  Ms2100Reset();
 }
 
 void exti9_5_isr(void) {

@@ -80,7 +80,7 @@ uint8_t v_ctl_auto_throttle_submode = V_CTL_CLIMB_MODE_AUTO_THROTTLE;
 float v_ctl_auto_throttle_sum_err = 0;
 
 #ifdef LOITER_TRIM
-#error "Energy Controller can not accep Loiter Trim"
+#error "Energy Controller can not accept Loiter Trim"
 #endif
 //#ifdef V_CTL_AUTO_THROTTLE_MIN_CRUISE_THROTTLE
 //#error
@@ -95,7 +95,7 @@ float v_ctl_airspeed_pgain;
 float v_ctl_altitude_error;    ///< in meters, (setpoint - alt) -> positive = too low
 
 float v_ctl_max_climb;
-float v_ctl_max_acceleration = 0.5;
+float v_ctl_max_acceleration;
 
 /* inner loop */
 float v_ctl_climb_setpoint;
@@ -138,8 +138,12 @@ float v_ctl_pitch_setpoint;
 
 ///////////// DEFAULT SETTINGS ////////////////
 #ifndef V_CTL_ALTITUDE_MAX_CLIMB
-#define V_CTL_ALTITUDE_MAX_CLIMB 2;
+#define V_CTL_ALTITUDE_MAX_CLIMB 2.0f
 #warning "V_CTL_ALTITUDE_MAX_CLIMB not defined - default is 2m/s"
+#endif
+#ifndef V_CTL_MAX_ACCELERATION
+#define V_CTL_MAX_ACCELERATION 0.5f
+#warning "V_CTL_MAX_ACCELERATION not defined - default is 0.5g"
 #endif
 #ifndef STALL_AIRSPEED
 #warning "No STALL_AIRSPEED defined. Using NOMINAL_AIRSPEED"
@@ -240,12 +244,8 @@ void v_ctl_init( void ) {
 #warning "V_CTL_ENERGY_TOT GAINS are not defined and set to 0"
 #endif
 
-#ifdef V_CTL_ALTITUDE_MAX_CLIMB
   v_ctl_max_climb = V_CTL_ALTITUDE_MAX_CLIMB;
-#else
-  v_ctl_max_climb = 2;
-#warning "V_CTL_ALTITUDE_MAX_CLIMB not defined - default is 2m/s"
-#endif
+  v_ctl_max_acceleration = V_CTL_MAX_ACCELERATION;
 
 #ifdef V_CTL_AUTO_GROUNDSPEED_SETPOINT
   v_ctl_auto_groundspeed_setpoint = V_CTL_AUTO_GROUNDSPEED_SETPOINT;
@@ -257,7 +257,7 @@ void v_ctl_init( void ) {
   v_ctl_throttle_setpoint = 0;
 }
 
-const float dt_attidude = 1.0 / ((float)CONTROL_FREQUENCY);
+const float dt_attitude = 1.0 / ((float)CONTROL_FREQUENCY);
 const float dt_navigation = 1.0 / ((float)NAVIGATION_FREQUENCY);
 
 /**
@@ -305,7 +305,7 @@ void v_ctl_climb_loop( void )
   // airspeed_setpoint ratelimiter:
   // AIRSPEED_SETPOINT_SLEW in m/s/s - a change from 15m/s to 18m/s takes 3s with the default value of 1
   float airspeed_incr = v_ctl_auto_airspeed_setpoint - v_ctl_auto_airspeed_setpoint_slew;
-  BoundAbs(airspeed_incr, AIRSPEED_SETPOINT_SLEW * dt_attidude);
+  BoundAbs(airspeed_incr, AIRSPEED_SETPOINT_SLEW * dt_attitude);
   v_ctl_auto_airspeed_setpoint_slew += airspeed_incr;
 
 #ifdef V_CTL_AUTO_GROUNDSPEED_SETPOINT
@@ -357,8 +357,8 @@ void v_ctl_climb_loop( void )
   if (launch && (v_ctl_mode >= V_CTL_MODE_AUTO_CLIMB))
   {
     v_ctl_auto_throttle_nominal_cruise_throttle +=
-        v_ctl_auto_throttle_of_airspeed_igain * speed_error * dt_attidude
-      + en_tot_err * v_ctl_energy_total_igain * dt_attidude;
+        v_ctl_auto_throttle_of_airspeed_igain * speed_error * dt_attitude
+      + en_tot_err * v_ctl_energy_total_igain * dt_attitude;
     Bound(v_ctl_auto_throttle_nominal_cruise_throttle,0.0f,1.0f);
   }
 
@@ -374,16 +374,16 @@ void v_ctl_climb_loop( void )
     en_dis_err = -vdot_err;
 
     // adjust climb_setpoint to maintain airspeed in case of an engine failure or an unrestriced climb
-     if(v_ctl_climb_setpoint>0) v_ctl_climb_setpoint += - 30. * dt_attidude;
-     if(v_ctl_climb_setpoint<0) v_ctl_climb_setpoint +=   30. * dt_attidude;
+     if(v_ctl_climb_setpoint>0) v_ctl_climb_setpoint += - 30. * dt_attitude;
+     if(v_ctl_climb_setpoint<0) v_ctl_climb_setpoint +=   30. * dt_attitude;
   }
 
 
   /* pitch pre-command */
   if (launch && (v_ctl_mode >= V_CTL_MODE_AUTO_CLIMB))
   {
-    v_ctl_auto_throttle_nominal_cruise_pitch +=  v_ctl_auto_pitch_of_airspeed_igain * (-speed_error) * dt_attidude
-                          + v_ctl_energy_diff_igain * en_dis_err * dt_attidude;
+    v_ctl_auto_throttle_nominal_cruise_pitch +=  v_ctl_auto_pitch_of_airspeed_igain * (-speed_error) * dt_attitude
+                          + v_ctl_energy_diff_igain * en_dis_err * dt_attitude;
     Bound(v_ctl_auto_throttle_nominal_cruise_pitch,H_CTL_PITCH_MIN_SETPOINT, H_CTL_PITCH_MAX_SETPOINT);
   }
   float v_ctl_pitch_of_vz =
@@ -394,24 +394,32 @@ void v_ctl_climb_loop( void )
                 + v_ctl_auto_throttle_nominal_cruise_pitch;
 
   v_ctl_pitch_setpoint = v_ctl_pitch_of_vz + nav_pitch;
-  Bound(v_ctl_pitch_setpoint,H_CTL_PITCH_MIN_SETPOINT,H_CTL_PITCH_MAX_SETPOINT)
+  Bound(v_ctl_pitch_setpoint,H_CTL_PITCH_MIN_SETPOINT,H_CTL_PITCH_MAX_SETPOINT);
 
   ac_char_update(controlled_throttle, v_ctl_pitch_of_vz, v_ctl_climb_setpoint, v_ctl_desired_acceleration);
 
   v_ctl_throttle_setpoint = TRIM_UPPRZ(controlled_throttle * MAX_PPRZ);
 }
 
-
+/*
+ * In units of 100% per second, so a value of 1 means it takes
+ * 1 second to slew from 0% to 100% throttle.
+ */
 #ifdef V_CTL_THROTTLE_SLEW_LIMITER
 #define V_CTL_THROTTLE_SLEW (1./CONTROL_FREQUENCY/(V_CTL_THROTTLE_SLEW_LIMITER))
 #endif
 
+/*
+ * In units of 100% per period, so a value of 1 means it takes
+ * 1/CONTROL_FREQUENCY seconds to slew from 0% to 100% throttle
+ * (which is essentially no slew).
+ */
 #ifndef V_CTL_THROTTLE_SLEW
 #define V_CTL_THROTTLE_SLEW 1.
 #endif
 
 /** \brief Computes slewed throttle from throttle setpoint
-    called at 20Hz
+    called at CONTROL_FREQUENCY
  */
 void v_ctl_throttle_slew( void ) {
   pprz_t diff_throttle = v_ctl_throttle_setpoint - v_ctl_throttle_slewed;

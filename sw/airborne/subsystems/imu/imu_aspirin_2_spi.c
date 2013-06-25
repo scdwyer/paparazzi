@@ -150,6 +150,7 @@ void imu_aspirin2_event(void)
     mag.y = Int16FromBuf(imu_aspirin2.mpu.data_ext, 2);
     mag.z = Int16FromBuf(imu_aspirin2.mpu.data_ext, 4);
 #ifdef LISA_M_LONGITUDINAL_X
+PRINT_CONFIG_MSG("Aspirin using LISA_M_LONGITUDINAL_X orientation")
     RATES_ASSIGN(imu.gyro_unscaled,
                  imu_aspirin2.mpu.data_rates.rates.q,
                  -imu_aspirin2.mpu.data_rates.rates.p,
@@ -159,6 +160,17 @@ void imu_aspirin2_event(void)
                  -imu_aspirin2.mpu.data_accel.vect.x,
                  imu_aspirin2.mpu.data_accel.vect.z);
     VECT3_ASSIGN(imu.mag_unscaled, -mag.x, -mag.z, mag.y);
+#elif defined LISA_M_XPORT_YUP_ZFRONT
+PRINT_CONFIG_MSG("Aspirin using LISA_M_XPORT_YUP_ZFRONT orientation")
+    RATES_ASSIGN(imu.gyro_unscaled,
+                 imu_aspirin2.mpu.data_rates.rates.r,
+                 -imu_aspirin2.mpu.data_rates.rates.p,
+                 -imu_aspirin2.mpu.data_rates.rates.q);
+    VECT3_ASSIGN(imu.accel_unscaled,
+                 imu_aspirin2.mpu.data_accel.vect.z,
+                 -imu_aspirin2.mpu.data_accel.vect.x,
+                 -imu_aspirin2.mpu.data_accel.vect.y);
+    VECT3_ASSIGN(imu.mag_unscaled, mag.z, -mag.y, mag.x);
 #else
     RATES_COPY(imu.gyro_unscaled, imu_aspirin2.mpu.data_rates.rates);
     VECT3_COPY(imu.accel_unscaled, imu_aspirin2.mpu.data_accel.vect);

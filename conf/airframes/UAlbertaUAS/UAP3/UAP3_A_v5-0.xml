@@ -116,10 +116,10 @@
 -->
 
     <load name="digital_cam.xml">
-      <define name="DC_SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
-      <define name="DC_SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
-      <define name="DC_PUSH" value="LED_OFF" /> <!-- actually LED_OFF is High on Lisa/M v2 -->
-      <define name="DC_RELEASE" value="LED_ON" />
+      <!-- <define name="DC_SHUTTER_LED" value="12"/> --> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
+      <!-- <define name="DC_SHUTTER_DELAY" value="1"/> --> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
+      <!-- <define name="DC_PUSH" value="LED_OFF" /> --> <!-- actually LED_OFF is High on Lisa/M v2 -->
+      <!-- <define name="DC_RELEASE" value="LED_ON" /> -->
     </load>
 
     <load name="photogrammetry_calculator.xml"/>
@@ -359,8 +359,12 @@
   </section>
 
   <section name="DIGITAL_CAMERA" prefix="DC_">
-    <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="4" unit="quarter_second"/>
+    <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="2" unit="quarter_second"/>
     <define name="AUTOSHOOT_METER_GRID" value="25" unit="meter"/>
+    <define name="SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
+    <define name="SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
+    <define name="PUSH" value="LED_OFF" /> <!-- actually LED_OFF is High on Lisa/M v2 -->
+    <define name="RELEASE" value="LED_ON" />
   </section>
 
   <section name="Photogrammetry" prefix="PHOTOGRAMMETRY_">

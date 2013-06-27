@@ -10,7 +10,7 @@
       Spektrum DX-8 Transmitter, 2x DSM2 Satellite Receivers
       Transition Robotics Lisa/M v2.0 with Aspirin 2.1
       PPZUAV GPS13 gps
-      Digi XBee-PRO S2 radio modems (transparent serial), wire in air, U.Fl + RP-SMA on ground
+      Digi XBee PRO 900HP radio modems (transparent serial), wire in air, RP-SMA on ground
       Eagle Tree Systems Airspeed Microsensor V3
 
       Payload :
@@ -115,12 +115,7 @@
     </load>
 -->
 
-    <load name="digital_cam.xml">
-      <!-- <define name="DC_SHUTTER_LED" value="12"/> --> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
-      <!-- <define name="DC_SHUTTER_DELAY" value="1"/> --> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
-      <!-- <define name="DC_PUSH" value="LED_OFF" /> --> <!-- actually LED_OFF is High on Lisa/M v2 -->
-      <!-- <define name="DC_RELEASE" value="LED_ON" /> -->
-    </load>
+    <load name="digital_cam.xml"/>
 
     <load name="photogrammetry_calculator.xml"/>
 
@@ -359,10 +354,10 @@
   </section>
 
   <section name="DIGITAL_CAMERA" prefix="DC_">
-    <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="2" unit="quarter_second"/>
+    <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="4" unit="quarter_second"/> <!-- actually 20Hz now? -->
     <define name="AUTOSHOOT_METER_GRID" value="25" unit="meter"/>
     <define name="SHUTTER_LED" value="12"/> <!-- LED 12 is on PC12 on GPIO connector, need to explicitly enable in firmware section -->
-    <define name="SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse -->
+    <define name="SHUTTER_DELAY" value="1"/> <!-- at 4Hz gives 0.25s shutter trigger pulse, @20Hz = 0.1s -->
     <define name="PUSH" value="LED_OFF" /> <!-- actually LED_OFF is High on Lisa/M v2 -->
     <define name="RELEASE" value="LED_ON" />
   </section>

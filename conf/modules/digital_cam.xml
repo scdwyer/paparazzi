@@ -29,7 +29,7 @@
 
   <init fun="led_cam_ctrl_init()"/>
 
-  <periodic fun="led_cam_ctrl_periodic()" freq="4" autorun="TRUE"/>
+  <periodic fun="led_cam_ctrl_periodic()" freq="20" autorun="TRUE"/>
 
   <makefile >
 

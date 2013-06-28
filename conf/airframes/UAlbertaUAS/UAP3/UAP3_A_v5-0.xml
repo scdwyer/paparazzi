@@ -99,6 +99,7 @@
     <load name="gps_ubx_ucenter.xml"/> <!-- not sure if this is needed??? -->
     <load name="airspeed_ets.xml">
       <define name="AIRSPEED_ETS_I2C_DEV" value="i2c2"/>
+      <define name="AIRSPEED_ETS_START_DELAY" value="10"/>
     </load>
 <!--
     <load name="adc_generic.xml">

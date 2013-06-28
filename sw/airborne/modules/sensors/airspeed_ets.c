@@ -52,6 +52,10 @@
 #endif
 #endif
 
+#ifndef AIRSPEED_ETS_START_DELAY
+#define AIRSPEED_ETS_START_DELAY 0
+#endif
+
 #define AIRSPEED_ETS_ADDR 0xEA
 #ifndef AIRSPEED_ETS_SCALE
 #define AIRSPEED_ETS_SCALE 1.8
@@ -81,6 +85,11 @@ float airspeed_ets;
 int airspeed_ets_buffer_idx;
 float airspeed_ets_buffer[AIRSPEED_ETS_NBSAMPLES_AVRG];
 
+uint8_t airspeed_ets_start_delay;
+#if AIRSPEED_ETS_START_DELAY
+#pragma message "Using AIRSPEED_ETS_START_DELAY"
+#endif
+
 struct i2c_transaction airspeed_ets_i2c_trans;
 
 // Local variables
@@ -100,17 +109,29 @@ void airspeed_ets_init( void ) {
   airspeed_ets_offset_init = FALSE;
   airspeed_ets_cnt = AIRSPEED_ETS_OFFSET_NBSAMPLES_INIT + AIRSPEED_ETS_OFFSET_NBSAMPLES_AVRG;
 
+  airspeed_ets_start_delay = AIRSPEED_ETS_START_DELAY;
+
   airspeed_ets_buffer_idx = 0;
   for (n=0; n < AIRSPEED_ETS_NBSAMPLES_AVRG; ++n)
     airspeed_ets_buffer[n] = 0.0;
 
-  airspeed_ets_i2c_trans.status = I2CTransDone;
+  /* Don't want the event running until after the delay */
+  airspeed_ets_i2c_trans.status = I2CTransFailed;
 }
 
 void airspeed_ets_read_periodic( void ) {
 #ifndef SITL
-  if (airspeed_ets_i2c_trans.status == I2CTransDone)
-    i2c_receive(&AIRSPEED_ETS_I2C_DEV, &airspeed_ets_i2c_trans, AIRSPEED_ETS_ADDR, 2);
+  /* Delay initial communication with the airspeed sensor */
+  if (airspeed_ets_start_delay) {
+    airspeed_ets_start_delay--;
+    if (airspeed_ets_start_delay == 0) {
+      /* Don't want the event running until after the delay */
+      airspeed_ets_i2c_trans.status = I2CTransDone;
+    }
+  } else {
+    if (airspeed_ets_i2c_trans.status == I2CTransDone)
+      i2c_receive(&AIRSPEED_ETS_I2C_DEV, &airspeed_ets_i2c_trans, AIRSPEED_ETS_ADDR, 2);
+  }
 #else // SITL
   extern float sim_air_speed;
   stateSetAirspeed_f(&sim_air_speed);

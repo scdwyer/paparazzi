@@ -86,9 +86,6 @@ int airspeed_ets_buffer_idx;
 float airspeed_ets_buffer[AIRSPEED_ETS_NBSAMPLES_AVRG];
 
 uint8_t airspeed_ets_start_delay;
-#if AIRSPEED_ETS_START_DELAY
-#pragma message "Using AIRSPEED_ETS_START_DELAY"
-#endif
 
 struct i2c_transaction airspeed_ets_i2c_trans;
 
@@ -109,14 +106,19 @@ void airspeed_ets_init( void ) {
   airspeed_ets_offset_init = FALSE;
   airspeed_ets_cnt = AIRSPEED_ETS_OFFSET_NBSAMPLES_INIT + AIRSPEED_ETS_OFFSET_NBSAMPLES_AVRG;
 
+#if AIRSPEED_ETS_START_DELAY
+#pragma message "Using AIRSPEED_ETS_START_DELAY"
   airspeed_ets_start_delay = AIRSPEED_ETS_START_DELAY;
+  /* Don't want the event running until after the delay */
+  airspeed_ets_i2c_trans.status = I2CTransFailed;
+#else
+  airspeed_ets_start_delay = 0;
+  airspeed_ets_i2c_trans.status = I2CTransDone;
+#endif
 
   airspeed_ets_buffer_idx = 0;
   for (n=0; n < AIRSPEED_ETS_NBSAMPLES_AVRG; ++n)
     airspeed_ets_buffer[n] = 0.0;
-
-  /* Don't want the event running until after the delay */
-  airspeed_ets_i2c_trans.status = I2CTransFailed;
 }
 
 void airspeed_ets_read_periodic( void ) {

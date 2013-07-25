@@ -96,6 +96,67 @@
       <message name="IMU_GYRO_RAW"        period=".5"/>
       <message name="IMU_MAG_RAW"         period=".5"/>
     </mode>
+    <mode name="debug_imu2">
+      <message name="ATTITUDE"            period="0.5"/>
+      <message name="ALIVE"               period="5"/>
+      <message name="BAT"                 period="10.1"/>
+      <message name="STATE_FILTER_STATUS" period="5."/>
+      <message name="DOWNLINK"            period="5.7"/>
+      <message name="IMU_ACCEL"           period=".1"/>
+      <message name="IMU_GYRO"            period=".1"/>
+      <message name="IMU_MAG"             period=".1"/>
+      <message name="IMU_ACCEL_RAW"       period=".5"/>
+      <message name="IMU_GYRO_RAW"        period=".5"/>
+      <message name="IMU_MAG_RAW"         period=".5"/>
+    </mode>
+    <mode name="debug_imu3">
+      <message name="ATTITUDE"            period="0.2"/>
+      <message name="ALIVE"               period="5"/>
+      <message name="DOWNLINK"            period="5.7"/>
+      <message name="BAT"                 period="1.1"/>
+      <message name="IMU_ACCEL"           period=".01"/>
+      <message name="IMU_GYRO"            period=".01"/>
+      <message name="IMU_MAG"             period=".01"/>
+    </mode>
+    <mode name="debug_ahrs_euler">
+      <message name="ALIVE"               period="2.1"/>
+      <message name="BAT"                 period="1.1"/>
+      <message name="DOWNLINK"            period="5.7"/>
+      <message name="ATTITUDE"            period="0.2"/>
+      <message name="FILTER_ALIGNER"      period="2.2"/>
+      <message name="FILTER"              period=".5"/>
+      <message name="AHRS_GYRO_BIAS_INT"  period="0.08"/>
+<!--      <message name="AHRS_QUAT_INT"   period=".25"/> -->
+      <message name="AHRS_EULER_INT"      period=".1"/>
+<!--      <message name="AHRS_RMAT_INT"   period=".5"/> -->
+    </mode>
+    <mode name="debug_ahrs_quat">
+      <message name="ALIVE"               period="2.1"/>
+      <message name="BAT"                 period="1.1"/>
+      <message name="DOWNLINK"            period="5.7"/>
+      <message name="ATTITUDE"            period="0.2"/>
+      <message name="FILTER_ALIGNER"      period="2.2"/>
+      <message name="FILTER"              period=".5"/>
+      <message name="AHRS_GYRO_BIAS_INT"  period="0.08"/>
+      <message name="AHRS_QUAT_INT"       period=".25"/>
+      <message name="AHRS_EULER_INT"      period="5.3"/>
+<!--      <message name="AHRS_RMAT_INT"   period=".5"/> -->
+    </mode>
+    <mode name="debug_ahrs_imu_quat">
+      <message name="ALIVE"               period="2.1"/>
+      <message name="BAT"                 period="1.1"/>
+      <message name="DOWNLINK"            period="5.7"/>
+      <message name="ATTITUDE"            period="0.2"/>
+      <message name="FILTER_ALIGNER"      period="2.2"/>
+      <message name="FILTER"              period=".5"/>
+      <message name="AHRS_GYRO_BIAS_INT"  period="0.08"/>
+      <message name="AHRS_QUAT_INT"       period=".25"/>
+      <message name="AHRS_EULER_INT"      period="5.3"/>
+      <message name="IMU_ACCEL"           period=".01"/>
+      <message name="IMU_GYRO"            period=".01"/>
+      <!-- <message name="IMU_MAG"             period=".01"/> -->
+<!--      <message name="AHRS_RMAT_INT"   period=".5"/> -->
+    </mode>
   </process>
   <process name="Fbw">
     <mode name="default">

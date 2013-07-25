@@ -67,9 +67,20 @@
       <define name="AHRS_GRAVITY_UPDATE_COORDINATED_TURN" />
     </subsystem>
     -->
-    <subsystem name="imu" type="aspirin_v2.1"/>
-    <subsystem name="ahrs" type="float_dcm">
-<!--      <define name="USE_MAGNETOMETER" /> -->
+    <subsystem name="imu" type="aspirin_v2.1">
+      <define name="ASPIRIN_2_LOWPASS_FILTER" value="MPU60X0_DLPF_42HZ"/>
+      <define name="ASPIRIN_2_SMPLRT_DIV" value="9"/> <!-- 188, 98, 42 -->
+    </subsystem>
+
+    <!-- <subsystem name="ahrs" type="float_dcm"/> -->
+    <!--   <define name="USE_MAGNETOMETER" />
+    </subsystem> -->
+
+    <subsystem name="ahrs" type="int_cmpl_quat">
+      <configure name="USE_MAGNETOMETER" value="0"/>
+      <define name="AHRS_USE_GPS_HEADING"/>
+      <!-- <define name="AHRS_ACCEL_OMEGA" value="0.063"/>
+      <define name="AHRS_ACCEL_ZETA" value="0.9"/> -->
     </subsystem>
 
     <subsystem name="ins" type="alt_float"/>
@@ -240,6 +251,8 @@
     <define name="DEFAULT_CIRCLE_RADIUS" value="60."/>
 
     <define name="NAV_GLIDE_PITCH_TRIM" value="0."/>
+
+    <define name="SPEECH_NAME" value="_"/>
   </section>
 
 <!--
@@ -270,10 +283,10 @@
     <define name="MAX_ACCELERATION" value="0.5"/> <!-- default: 0.5 -->
 
     <!-- auto throttle inner loop -->
-    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.7"/>
+    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.75"/>
     <define name="AUTO_THROTTLE_NOMINAL_CRUISE_PITCH" value="0."/> <!-- default 0 -->
     <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.35"/> <!-- Not used in energy control -->
-    <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.9"/> <!-- Not used in energy control -->
+    <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.95"/> <!-- Not used in energy control -->
 
     <!-- Traditional control -->
     <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.518000006676" unit="%/(m/s)"/> <!-- Not used in energy control -->

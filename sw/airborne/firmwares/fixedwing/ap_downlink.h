@@ -317,5 +317,108 @@
 #include "firmwares/fixedwing/stabilization/stabilization_adaptive.h"
 #define PERIODIC_SEND_H_CTL_A(_trans, _dev) DOWNLINK_SEND_H_CTL_A(_trans, _dev, &h_ctl_roll_sum_err, &h_ctl_ref_roll_angle, &h_ctl_pitch_sum_err, &h_ctl_ref_pitch_angle)
 
+#if USE_AHRS_CMPL_EULER
+#include "subsystems/ahrs/ahrs_int_cmpl_euler.h"
+#define PERIODIC_SEND_FILTER(_trans, _dev) {          \
+    DOWNLINK_SEND_FILTER(_trans, _dev,            \
+             &ahrs_impl.ltp_to_imu_euler.phi,     \
+             &ahrs_impl.ltp_to_imu_euler.theta,     \
+             &ahrs_impl.ltp_to_imu_euler.psi,     \
+             &ahrs_impl.measure.phi,      \
+             &ahrs_impl.measure.theta,      \
+             &ahrs_impl.measure.psi,      \
+             &ahrs_impl.hi_res_euler.phi,     \
+             &ahrs_impl.hi_res_euler.theta,     \
+             &ahrs_impl.hi_res_euler.psi,     \
+             &ahrs_impl.residual.phi,     \
+             &ahrs_impl.residual.theta,     \
+             &ahrs_impl.residual.psi,     \
+             &ahrs_impl.gyro_bias.p,      \
+             &ahrs_impl.gyro_bias.q,      \
+             &ahrs_impl.gyro_bias.r);     \
+  }
+#else
+#define PERIODIC_SEND_FILTER(_trans, _dev) {}
+#endif
+
+#if USE_AHRS_CMPL_EULER || USE_AHRS_CMPL_QUAT
+#define PERIODIC_SEND_AHRS_GYRO_BIAS_INT(_trans, _dev) {    \
+  DOWNLINK_SEND_AHRS_GYRO_BIAS_INT(_trans, _dev,            \
+                                   &ahrs_impl.gyro_bias.p,  \
+                                   &ahrs_impl.gyro_bias.q,  \
+                                   &ahrs_impl.gyro_bias.r); \
+  }
+#else
+#define PERIODIC_SEND_AHRS_GYRO_BIAS_INT(_trans, _dev) {}
+#endif
+
+#ifndef AHRS_FLOAT
+#define PERIODIC_SEND_AHRS_QUAT_INT(_trans, _dev) {   \
+    DOWNLINK_SEND_AHRS_QUAT_INT(_trans, _dev,         \
+                  &ahrs_impl.weight,                  \
+                  &ahrs_impl.ltp_to_imu_quat.qi,      \
+                  &ahrs_impl.ltp_to_imu_quat.qx,      \
+                  &ahrs_impl.ltp_to_imu_quat.qy,      \
+                  &ahrs_impl.ltp_to_imu_quat.qz,      \
+                  &(stateGetNedToBodyQuat_i()->qi),   \
+                  &(stateGetNedToBodyQuat_i()->qx),   \
+                  &(stateGetNedToBodyQuat_i()->qy),   \
+                  &(stateGetNedToBodyQuat_i()->qz));  \
+  }
+#endif
+
+#if USE_AHRS_CMPL_EULER
+#define PERIODIC_SEND_AHRS_EULER_INT(_trans, _dev) {      \
+    DOWNLINK_SEND_AHRS_EULER_INT(_trans, _dev,            \
+                   &ahrs_impl.ltp_to_imu_euler.phi,       \
+                   &ahrs_impl.ltp_to_imu_euler.theta,     \
+                   &ahrs_impl.ltp_to_imu_euler.psi,       \
+                   &(stateGetNedToBodyEulers_i()->phi),   \
+                   &(stateGetNedToBodyEulers_i()->theta), \
+                   &(stateGetNedToBodyEulers_i()->psi));  \
+  }
+#else
+#ifndef AHRS_FLOAT
+#define PERIODIC_SEND_AHRS_EULER_INT(_trans, _dev) {                    \
+    struct Int32Eulers ltp_to_imu_euler;                                \
+    INT32_EULERS_OF_QUAT(ltp_to_imu_euler, ahrs_impl.ltp_to_imu_quat);  \
+    DOWNLINK_SEND_AHRS_EULER_INT(_trans, _dev,                          \
+                                 &ltp_to_imu_euler.phi,                 \
+                                 &ltp_to_imu_euler.theta,               \
+                                 &ltp_to_imu_euler.psi,                 \
+                                 &(stateGetNedToBodyEulers_i()->phi),   \
+                                 &(stateGetNedToBodyEulers_i()->theta), \
+                                 &(stateGetNedToBodyEulers_i()->psi));  \
+}
+#else
+#define PERIODIC_SEND_AHRS_EULER_INT(_trans, _dev) {                    \
+    struct FloatEulers ltp_to_imu_euler;                                \
+    FLOAT_EULERS_OF_QUAT(ltp_to_imu_euler, ahrs_impl.ltp_to_imu_quat);  \
+    struct Int32Eulers euler_i;                                         \
+    EULERS_BFP_OF_REAL(euler_i, ltp_to_imu_euler);                \
+    DOWNLINK_SEND_AHRS_EULER_INT(_trans, _dev,                          \
+                                 &euler_i.phi,                          \
+                                 &euler_i.theta,                        \
+                                 &euler_i.psi,                          \
+                                 &(stateGetNedToBodyEulers_i()->phi),   \
+                                 &(stateGetNedToBodyEulers_i()->theta), \
+                                 &(stateGetNedToBodyEulers_i()->psi));  \
+  }
+#endif
+#endif
+
+#include "subsystems/ahrs/ahrs_aligner.h"
+#define PERIODIC_SEND_FILTER_ALIGNER(_trans, _dev) {      \
+    DOWNLINK_SEND_FILTER_ALIGNER(_trans, _dev,                  \
+                                 &ahrs_aligner.lp_gyro.p,       \
+                                 &ahrs_aligner.lp_gyro.q,       \
+                                 &ahrs_aligner.lp_gyro.r,       \
+                                 &imu.gyro.p,                   \
+                                 &imu.gyro.q,                   \
+                                 &imu.gyro.r,                   \
+                                 &ahrs_aligner.noise,           \
+                                 &ahrs_aligner.low_noise_cnt,   \
+                                 &ahrs_aligner.status);         \
+  }
 
 #endif /* AP_DOWNLINK_H */

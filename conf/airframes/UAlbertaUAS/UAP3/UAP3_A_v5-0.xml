@@ -238,7 +238,7 @@
 
   <section name="MISC">
     <define name="CLIMB_AIRSPEED" value="14." unit="m/s"/>
-    <define name="NOMINAL_AIRSPEED" value="17." unit="m/s"/>
+    <define name="NOMINAL_AIRSPEED" value="18." unit="m/s"/>
     <define name="GLIDE_AIRSPEED" value="14." unit="m/s"/>
     <define name="RACE_AIRSPEED" value="22." unit="m/s"/>
     <define name="STALL_AIRSPEED" value="11." unit="m/s"/>
@@ -252,7 +252,6 @@
 
     <define name="NAV_GLIDE_PITCH_TRIM" value="0."/>
 
-    <define name="SPEECH_NAME" value="_"/>
   </section>
 
 <!--
@@ -275,7 +274,7 @@
   <section name="VERTICAL CONTROL" prefix="V_CTL_">
     <define name="POWER_CTL_BAT_NOMINAL" value="11.1" unit="volt"/>
     <!-- outer loop proportional gain -->
-    <define name="ALTITUDE_PGAIN" value="0.104999996722"/>
+    <define name="ALTITUDE_PGAIN" value="0.105"/>
     <!-- outer loop saturation -->
     <define name="ALTITUDE_MAX_CLIMB" value="3."/> <!-- default: 2 -->
 
@@ -283,14 +282,14 @@
     <define name="MAX_ACCELERATION" value="0.5"/> <!-- default: 0.5 -->
 
     <!-- auto throttle inner loop -->
-    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.75"/>
+    <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE" value="0.70"/>
     <define name="AUTO_THROTTLE_NOMINAL_CRUISE_PITCH" value="0."/> <!-- default 0 -->
     <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE" value="0.35"/> <!-- Not used in energy control -->
     <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE" value="0.95"/> <!-- Not used in energy control -->
 
     <!-- Traditional control -->
-    <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.518000006676" unit="%/(m/s)"/> <!-- Not used in energy control -->
-    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.307000011206"/> <!-- Not used in energy control -->
+    <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT" value="0.0" unit="%/(m/s)"/> <!-- Not used in energy control -->
+    <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN" value="0.0"/> <!-- Not used in energy control -->
 
     <define name="AUTO_THROTTLE_OF_AIRSPEED_PGAIN" value="0.0"/> <!-- TM Def: 0.069, Not used in energy control -->
     <define name="AUTO_THROTTLE_OF_AIRSPEED_IGAIN" value="0.0"/> <!-- TM Def: 0.01, Not used in energy control -->
@@ -300,12 +299,12 @@
     <define name="AUTO_PITCH_OF_AIRSPEED_DGAIN" value="0.0"/> <!-- TM Def: 0.03, Not used in energy control -->
 
     <!-- Energy control -->
-    <define name="AIRSPEED_PGAIN" value="0.0"/>
+    <define name="AIRSPEED_PGAIN" value="0.1"/>
 
-    <define name="ENERGY_TOT_PGAIN" value="0.0"/>
-    <define name="ENERGY_TOT_IGAIN" value="0.0"/>
-    <define name="ENERGY_DIFF_PGAIN" value="0.0"/>
-    <define name="ENERGY_DIFF_IGAIN" value="0.0"/>
+    <define name="ENERGY_TOT_PGAIN" value="0.35"/>
+    <define name="ENERGY_TOT_IGAIN" value="0.05"/>
+    <define name="ENERGY_DIFF_PGAIN" value="0.2"/>
+    <define name="ENERGY_DIFF_IGAIN" value="0.03"/>
 
     <!-- Optional groundspeed control in energy control loops -->
     <!--
@@ -387,6 +386,10 @@
     <define name="HEIGHT_MIN" value="35" unit="m"/>
     <define name="HEIGHT_MAX" value="220" unit="m"/>
     <define name="RADIUS_MIN" value="70" unit="m"/>
+  </section>
+
+  <section name="GCS">
+    <define name="SPEECH_NAME" value="_"/>
   </section>
 
 </airframe>
